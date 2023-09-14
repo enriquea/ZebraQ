@@ -1,0 +1,154 @@
+---
+title: "S3_Exploratory_Data_Analysis"
+author: "Enrique Audain Martinez"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Exploratory Data Analysis
+
+Brief description:
+Exploratory data analysis (EDA) is an approach to analyzing data sets to summarize their main characteristics, 
+often with visual methods. A statistical model can be used or not, but primarily EDA is for seeing what the 
+data can tell us beyond the formal modeling or hypothesis testing task. 
+
+
+## 1. Load the data
+
+```{r Load the data, echo=TRUE}
+
+# Load the CHD gene annotation data
+chd_genes <- read.delim("~/projects/local/ZebraQ/data/chd_genes.annotations.tsv", header = TRUE, sep = "\t")
+
+# print the head of the data frame
+head(chd_genes)
+
+```
+
+## 2. Summarize the data
+
+```{r Summarize the data, echo=TRUE}
+
+# Summarize the data
+
+# Mean of the pLI score
+mean(chd_genes$pLI) 
+
+# Median of the pLI score
+median(chd_genes$pLI)
+
+# Standard deviation of the pLI score
+sd(chd_genes$pLI)
+
+# Maximum of the pLI score
+max(chd_genes$pLI)
+
+# Minimum of the pLI score
+min(chd_genes$pLI)
+
+# Summary of the pLI score
+summary(chd_genes$pLI)
+
+```
+
+## 3. Visulization of the data using ggplo2
+
+```{r Visulization of the data, echo=TRUE}
+
+# Visulization of the data using ggplo2
+
+# Load the ggplot2 library
+library(ggplot2)
+
+# Histogram of gene length
+ggplot(chd_genes, aes(x = gene_length)) + 
+  geom_histogram() +
+  labs(title = "Histogram of gene length", x = "Gene length", y = "Count")
+
+# Histogram of gene length log-transformed
+ggplot(chd_genes, aes(x = log2(gene_length))) + 
+  geom_histogram() +
+  labs(title = "Histogram of gene length log-transformed", x = "Gene length", y = "Count")
+
+# Boxplot per category
+ggplot(chd_genes, aes(x = category, y = oe_lof_upper)) + 
+  geom_boxplot(fill = "blue", color = "black") +
+  labs(title = "Boxplot of oe_lof per category", x = "category", y = "oe_lof")
+
+
+# Scatter plot
+# plot the pLI score vs the oe_lof score
+ggplot(chd_genes, aes(x = oe_mis, y = oe_lof)) + 
+  geom_point() +
+  labs(title = "Scatter plot of pLI vs oe_lof", x = "pLI", y = "oe_lof")
+
+
+# Scatter plot with regression line and correlation coefficient
+ggplot(chd_genes, aes(x = obs_syn, y = exp_syn)) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Scatter plot of pLI vs oe_lof", x = "pLI", y = "oe_lof") +
+  stat_cor(method = "pearson", label.x = 100, label.y = 1500)
+
+
+# Density plot per category for pLI metric
+ggplot(chd_genes, aes(x = oe_lof_upper, fill = category)) + 
+  geom_density(alpha = 0.5) +
+  labs(title = "Density plot of pLI per category", x = "pLI", y = "Density")
+
+# Bar plot - count number of genes per category
+ggplot(chd_genes, aes(x = category, fill = category)) + 
+  geom_bar() +
+  labs(title = "Bar plot of number of genes per category", x = "category", y = "Count")
+
+# Bar plot - count number of genes per chromosome
+ggplot(chd_genes, aes(x = chromosome)) + 
+  geom_bar(fill = "blue") +
+  labs(title = "Bar plot of number of genes per chromosome", x = "chromosome", y = "Count")
+
+```
+
+## 4. Statistical tests
+
+```{r Statistical tests, echo=TRUE}
+
+
+# t.test
+t.test(pLI ~ category, data = chd_genes)
+
+# ANOVA
+anova(lm(pLI ~ category, data = chd_genes))
+
+# wilcox.test
+wilcox.test(pLI ~ category, data = chd_genes)
+
+```
+
+
+## 5. Boxplot of Sepal Length by Species with t.test using ggpubr
+
+```{r Boxplot of Sepal Length by Species with t.test, echo=TRUE}
+
+# Boxplot of Sepal Length by Species with t.test using ggpubr
+
+# Load the ggpubr library
+library(ggpubr)
+
+# Boxplot of Sepal Length by Species
+ggboxplot(chd_genes, 
+          x = "category", 
+          y = "oe_lof_upper",
+          color = "category", 
+          palette = "jco") +
+  stat_compare_means(method = "wilcox.test", label.y = 2) +
+  labs(title = "Boxplot of oe_lof_upper by category", x = "category", y = "oe_lof_upper")
+
+```
+
+
+```{r Boxplot of Sepal Length by Species, echo=TRUE}

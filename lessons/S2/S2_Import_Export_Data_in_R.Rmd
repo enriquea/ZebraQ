@@ -1,0 +1,170 @@
+---
+title: "S2_IO_in_R"
+author: "Enrique Audain Martinez"
+date: "`r Sys.Date()`"
+output: 
+   html_document: default
+   pdf_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load libraries
+
+```{r Load libraries, echo=TRUE}
+
+library(openxlsx) 
+library(microbenchmark)
+
+```
+
+
+# Import/export data into/from R
+
+## 1. Import data
+
+```{r Import data, echo=TRUE}
+
+# 1. Import data
+
+# Import data from a csv file
+df <- read.csv("../../data/chd_genes.annotations.csv", 
+               sep = ",", 
+               header = TRUE)
+
+# print the head of the data frame
+head(df)
+
+# Import data using the read.table function
+df <- read.table("../../data/chd_genes.annotations.tsv",
+                 sep = "\t", 
+                 header = TRUE)
+
+# print the head of the data frame
+head(df)
+
+# Import data using the read.delim function
+df <- read.delim("../../data/chd_genes.annotations.tsv",
+                 sep = "\t", 
+                 header = TRUE)
+
+# print the head of the data frame
+head(df)
+
+# End of the section
+
+
+```
+
+\newpage
+
+## 2. Export data
+
+```{r Export data, echo=TRUE}
+
+# 2. Export data
+
+# load Iris data set
+data(iris)
+
+# print the head of the data frame
+head(iris)
+
+# Export data using the write.csv function
+write.csv(iris, file = "iris.csv")
+
+# Export data using the write.table function
+write.table(iris, file = "iris.txt")
+
+# End of the section
+
+
+```
+
+
+\newpage
+
+## 3. Import data from Excel
+
+```{r Import_data_from_Excel, fig.height=6, fig.width=6, message=TRUE, paged.print=TRUE}
+
+# 3. Import data from Excel
+
+# Import data from Excel
+df <- read.xlsx("../../data/chd_genes.annotations.xlsx", sheet = 1)
+
+# print the head of the data frame
+head(df)
+
+# End of the section
+
+
+```
+
+\newpage
+
+## 4. Export data to Excel
+
+```{r Export_data_to_Excel, fig.height=6, fig.width=6, message=TRUE, paged.print=TRUE}
+
+# 4. Export Iris data to Excel
+
+# load Iris data set
+data(iris)
+
+# print the head of the data frame
+head(iris)
+
+# Export data to Excel
+write.xlsx(iris, file = "iris.xlsx")
+
+# End of the section
+
+
+```
+
+
+\newpage
+
+## 5. Evaluating speed performance of import functions.
+
+Note: Differences between <read.csv>, <read.table> and <read.delim>
+read.csv is a special case of read.table, which is a special case of read.delim.
+read.csv uses a comma as a separator, read.table uses a tab, and read.delim uses a tab.
+read.csv is the most common of the three, and read.table is the most flexible.
+read.delim is used when the data is tab-delimited, but the extension is not txt.
+
+```{r Bonus, fig.height=6, fig.width=6, message=TRUE, paged.print=TRUE}
+
+# What is the faster function to import data?
+# read.csv is faster than read.table and read.delim.
+
+# Import data using the read.csv function
+microbenchmark(
+  read.csv("../../data/chd_genes.annotations.tsv",
+                        sep = "\t", 
+                        header = TRUE)
+  )
+
+# Import data using the read.table function
+microbenchmark(
+  read.table("../../data/chd_genes.annotations.tsv",
+                          sep = "\t", 
+                          header = TRUE)
+  )
+
+# Import data using the read.delim function
+microbenchmark(
+  read.delim("../../data/chd_genes.annotations.tsv",
+                          sep = "\t", 
+                          header = TRUE)
+  )
+
+
+# End of the section
+```
+
+
