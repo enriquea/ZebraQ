@@ -23,11 +23,13 @@ The course is divided in two parts:
 
 ## Dataset
 
-The data used in this course is intended to be used for educational purposes only. `/data` contains the following files:
+*Disclaimer: The data used in this course is intended to be used for educational purposes only.*
+
+`/data` contains the following files:
 
 -   Genes associated with CHD with functional annotations: `data/chd_gene.annotations.tsv`
 
--   Gene counts from RNA-seq data of wild type and mutant zebrafish (Danio Rerio) hearts: `data/salmon.gene_counts.tsv`
+-   Gene counts from RNA-seq data of wild type and mutant zebrafish (*Danio Rerio*) hearts: `data/salmon.gene_counts.tsv`
 
 ## Installation
 
