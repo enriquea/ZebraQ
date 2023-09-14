@@ -1,0 +1,7 @@
+sample_id	condition	replicate	time_point	runs
+WT_48hpf_R1	WT	r1	48h	run1
+WT_48hpf_R2	WT	r2	48h	run2
+WT_48hpf_R3	WT	r3	48h	run3
+MT_48hpf_R1	MT	r1	48h	run4
+MT_48hpf_R2	MT	r2	48h	run5
+MT_48hpf_R3	MT	r3	48h	run6
