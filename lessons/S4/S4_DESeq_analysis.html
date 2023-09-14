@@ -13,7 +13,7 @@
 
 <meta name="date" content="2023-09-14" />
 
-<title>S1_RNAseq_analysis</title>
+<title>S4_RNAseq_analysis</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -356,22 +356,20 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">S1_RNAseq_analysis</h1>
+<h1 class="title toc-ignore">S4_RNAseq_analysis</h1>
 <h4 class="author">Enrique Audain Martinez</h4>
 <h4 class="date">2023-09-14</h4>
 
 </div>
 
 
-<div id="load-libraries" class="section level2">
-<h2>Load libraries</h2>
+<div id="load-libraries-and-define-workflow-parameters" class="section level2">
+<h2>0. Load libraries and define workflow parameters</h2>
 <pre class="r"><code>library(DESeq2, quietly = TRUE) 
 library(ggplot2, quietly = TRUE)
-library(RColorBrewer, quietly = TRUE)</code></pre>
-</div>
-<div id="define-workflow-parameters" class="section level2">
-<h2>0. Define workflow parameters</h2>
-<pre class="r"><code># time point
+library(RColorBrewer, quietly = TRUE)
+
+# time point
 time_point = &#39;48h&#39;
 
 # define the reference group
@@ -379,7 +377,7 @@ ref_group = &#39;WT&#39;</code></pre>
 </div>
 <div id="import-sample-metadata" class="section level2">
 <h2>1. Import sample metadata</h2>
-<pre class="r"><code>z_ann &lt;- read.delim(&quot;~/projects/local/ZebraQ/data/samplesheet.tsv&quot;, 
+<pre class="r"><code>z_ann &lt;- read.delim(file = &quot;../../data/samplesheet.tsv&quot;, 
                     stringsAsFactors=FALSE)
 
 row.names(z_ann) &lt;- z_ann$sample_id
@@ -398,7 +396,7 @@ head(z_ann, 10)</code></pre>
 <h2>2. Prepare count matrix</h2>
 <pre class="r"><code># import count matrix
 z_counts &lt;- read.delim(
-  &quot;~/projects/local/ZebraQ/data/salmon.merged.gene_counts.filtered.tsv&quot;, 
+  file = &quot;../../data/salmon.merged.gene_counts.filtered.tsv&quot;, 
   stringsAsFactors=FALSE
   )
 
@@ -434,10 +432,7 @@ z_counts[1:6, 1:6]</code></pre>
 </div>
 <div id="set-up-experimental-design" class="section level2">
 <h2>3. Set up experimental design</h2>
-<pre class="r"><code># import library DESseq2
-library(DESeq2)
-
-# create a DESeqDataSet object
+<pre class="r"><code># create a DESeqDataSet object
 dds &lt;- DESeqDataSetFromMatrix(countData = z_counts,
                               colData = z_ann,
                               design = ~ condition)</code></pre>
@@ -538,37 +533,54 @@ print(paste0(&quot;Comparision performed: &quot;, comparision))</code></pre>
 <pre><code>## [1] &quot;Comparision performed: condition_MT_vs_WT&quot;</code></pre>
 <pre class="r"><code># extract results as data frame
 res &lt;- results(dds, name = comparision)
-res &lt;- data.frame(gene = row.names(res), res)
 
-# print the first 6 rows of the results data frame
-head(res)</code></pre>
-<pre><code>##                      gene   baseMean log2FoldChange     lfcSE        stat
-## LOC100000024 LOC100000024  35.013455     1.24661745 0.6706865  1.85871852
-## LOC100000576 LOC100000576 401.250550    -0.21159170 0.2204219 -0.95993941
-## LOC100000851 LOC100000851   2.215682     0.03019258 1.2265569  0.02461572
-## LOC100001344 LOC100001344  61.366950    -0.10271527 0.2465574 -0.41659775
-## LOC100001550 LOC100001550  42.240912     0.54158688 0.3346231  1.61849838
-## LOC100002237 LOC100002237   1.725135     1.33598711 1.9430965  0.68755570
-##                  pvalue      padj
-## LOC100000024 0.06306705 0.1252145
-## LOC100000576 0.33708571 0.4678042
-## LOC100000851 0.98036148 0.9884108
-## LOC100001344 0.67697265 0.7741253
-## LOC100001550 0.10555524 0.1903371
-## LOC100002237 0.49173261 0.6194620</code></pre>
+# print results
+res</code></pre>
+<pre><code>## log2 fold change (MLE): condition MT vs WT 
+## Wald test p-value: condition MT vs WT 
+## DataFrame with 13755 rows and 6 columns
+##                baseMean log2FoldChange     lfcSE       stat      pvalue
+##               &lt;numeric&gt;      &lt;numeric&gt; &lt;numeric&gt;  &lt;numeric&gt;   &lt;numeric&gt;
+## LOC100000024   35.01346      1.2466174  0.670687  1.8587185    0.063067
+## LOC100000576  401.25055     -0.2115917  0.220422 -0.9599394    0.337086
+## LOC100000851    2.21568      0.0301926  1.226557  0.0246157    0.980361
+## LOC100001344   61.36695     -0.1027153  0.246557 -0.4165978    0.676973
+## LOC100001550   42.24091      0.5415869  0.334623  1.6184984    0.105555
+## ...                 ...            ...       ...        ...         ...
+## zwilch        400.60805      0.5873992  0.121817   4.821984 1.42137e-06
+## zyg11        1465.05339     -0.5332838  0.168022  -3.173889 1.50411e-03
+## zymnd12         8.45217     -0.6658308  0.683108  -0.974708 3.29705e-01
+## zyx          1029.10390     -0.0871254  0.148073  -0.588395 5.56267e-01
+## zzz3         1124.36740     -0.4385312  0.207517  -2.113229 3.45811e-02
+##                     padj
+##                &lt;numeric&gt;
+## LOC100000024    0.125215
+## LOC100000576    0.467804
+## LOC100000851    0.988411
+## LOC100001344    0.774125
+## LOC100001550    0.190337
+## ...                  ...
+## zwilch       1.21568e-05
+## zyg11        5.47396e-03
+## zymnd12      4.60536e-01
+## zyx          6.73980e-01
+## zzz3         7.64093e-02</code></pre>
 </div>
 <div id="export-results" class="section level2">
 <h2>9. Export results</h2>
 <pre class="r"><code># export dds object
-saveRDS(dds, file = &quot;dds.rds&quot;)
+saveRDS(dds, file = &quot;../../results/dds.rds&quot;)
+
+# get results as a data frame
+res &lt;- data.frame(gene = row.names(res), res)
 
 # export results data frame
-write.table(res, file = &quot;DESeq2_results.tsv&quot;,
+write.table(res, file = &quot;../../results/DESeq2_results.tsv&quot;,
             sep = &quot;\t&quot;, quote = FALSE, row.names = FALSE)
 
 # export results as a excel file
 library(openxlsx)
-write.xlsx(res, file = &quot;DESeq2_results.xlsx&quot;,
+write.xlsx(res, file = &quot;../../results/DESeq2_results.xlsx&quot;,
            rowNames = FALSE)</code></pre>
 </div>
 <div id="print-r-session-info" class="section level2">

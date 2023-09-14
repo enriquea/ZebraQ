@@ -1,6 +1,6 @@
 ZebraQ 
 
-- [S1 link](https://github.com/enriquea/ZebraQ/blob/main/docs/S1_R_Data_Structures.html)
+- [S1 link](url)
 
 - [S2 link](url)
 

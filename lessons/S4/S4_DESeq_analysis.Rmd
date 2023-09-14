@@ -1,5 +1,5 @@
 ---
-title: "S1_RNAseq_analysis"
+title: "S4_RNAseq_analysis"
 author: "Enrique Audain Martinez"
 date: "`r Sys.Date()`"
 output: 
