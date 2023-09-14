@@ -363,13 +363,13 @@ display: none;
 </div>
 
 
-<div id="load-libraries" class="section level1">
-<h1>Load libraries</h1>
-<pre class="r"><code>library(openxlsx) 
-library(microbenchmark)</code></pre>
-</div>
 <div id="importexport-data-intofrom-r" class="section level1">
 <h1>Import/export data into/from R</h1>
+</div>
+<div id="load-libraries" class="section level1">
+<h1>0. Load libraries</h1>
+<pre class="r"><code>library(openxlsx) 
+library(microbenchmark)</code></pre>
 <div id="import-data" class="section level2">
 <h2>1. Import data</h2>
 <pre class="r"><code># 1. Import data
@@ -534,7 +534,7 @@ microbenchmark(
 ##                                                                               expr
 ##  read.csv(&quot;../../data/chd_genes.annotations.tsv&quot;, sep = &quot;\\t&quot;,      header = TRUE)
 ##      min       lq     mean   median       uq      max neval
-##  946.838 993.3145 1132.325 1075.974 1233.776 1673.764   100</code></pre>
+##  976.439 1003.641 1145.743 1122.824 1265.368 1786.503   100</code></pre>
 <pre class="r"><code># Import data using the read.table function
 microbenchmark(
   read.table(&quot;../../data/chd_genes.annotations.tsv&quot;,
@@ -544,8 +544,8 @@ microbenchmark(
 <pre><code>## Unit: microseconds
 ##                                                                                 expr
 ##  read.table(&quot;../../data/chd_genes.annotations.tsv&quot;, sep = &quot;\\t&quot;,      header = TRUE)
-##      min      lq     mean   median       uq      max neval
-##  966.419 979.532 1115.064 1133.583 1205.857 1682.236   100</code></pre>
+##      min       lq     mean   median       uq      max neval
+##  959.548 996.1265 1139.267 1091.906 1298.523 1792.778   100</code></pre>
 <pre class="r"><code># Import data using the read.delim function
 microbenchmark(
   read.delim(&quot;../../data/chd_genes.annotations.tsv&quot;,
@@ -556,7 +556,7 @@ microbenchmark(
 ##                                                                                 expr
 ##  read.delim(&quot;../../data/chd_genes.annotations.tsv&quot;, sep = &quot;\\t&quot;,      header = TRUE)
 ##      min       lq     mean   median       uq      max neval
-##  914.552 1003.908 1126.817 1109.125 1193.095 1746.586   100</code></pre>
+##  913.641 1001.866 1107.906 1037.027 1169.082 1616.371   100</code></pre>
 <pre class="r"><code># End of the section</code></pre>
 </div>
 </div>

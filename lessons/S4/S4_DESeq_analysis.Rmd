@@ -11,20 +11,13 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## Load libraries
+## 0. Load libraries and define workflow parameters
 
 ```{r load libraries, echo = TRUE, message=FALSE, warning=FALSE}
 
 library(DESeq2, quietly = TRUE) 
 library(ggplot2, quietly = TRUE)
 library(RColorBrewer, quietly = TRUE)
-
-```
-
-
-## 0. Define workflow parameters
-
-```{r setup workflow parameters, echo = TRUE}
 
 # time point
 time_point = '48h'
@@ -38,7 +31,7 @@ ref_group = 'WT'
 
 ```{r import sample metadata, echo = TRUE}
 
-z_ann <- read.delim("~/projects/local/ZebraQ/data/samplesheet.tsv", 
+z_ann <- read.delim(file = "../../data/samplesheet.tsv", 
                     stringsAsFactors=FALSE)
 
 row.names(z_ann) <- z_ann$sample_id
@@ -54,7 +47,7 @@ head(z_ann, 10)
 
 # import count matrix
 z_counts <- read.delim(
-  "~/projects/local/ZebraQ/data/salmon.merged.gene_counts.filtered.tsv", 
+  file = "../../data/salmon.merged.gene_counts.filtered.tsv", 
   stringsAsFactors=FALSE
   )
 
@@ -81,8 +74,6 @@ z_counts[1:6, 1:6]
 
 ```{r set up experimental design, echo = TRUE}
 
-# import library DESseq2
-library(DESeq2)
 
 # create a DESeqDataSet object
 dds <- DESeqDataSetFromMatrix(countData = z_counts,
@@ -170,10 +161,9 @@ print(paste0("Comparision performed: ", comparision))
 
 # extract results as data frame
 res <- results(dds, name = comparision)
-res <- data.frame(gene = row.names(res), res)
 
-# print the first 6 rows of the results data frame
-head(res)
+# print results
+res
 
 ```
 
@@ -183,15 +173,18 @@ head(res)
 ```{r export results, echo = TRUE}
 
 # export dds object
-saveRDS(dds, file = "dds.rds")
+saveRDS(dds, file = "../../results/dds.rds")
+
+# get results as a data frame
+res <- data.frame(gene = row.names(res), res)
 
 # export results data frame
-write.table(res, file = "DESeq2_results.tsv",
+write.table(res, file = "../../results/DESeq2_results.tsv",
             sep = "\t", quote = FALSE, row.names = FALSE)
 
 # export results as a excel file
 library(openxlsx)
-write.xlsx(res, file = "DESeq2_results.xlsx",
+write.xlsx(res, file = "../../results/DESeq2_results.xlsx",
            rowNames = FALSE)
 
 ```

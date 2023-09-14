@@ -3,8 +3,8 @@ title: "S3_Exploratory_Data_Analysis"
 author: "Enrique Audain Martinez"
 date: "`r Sys.Date()`"
 output:
-  word_document: default
   html_document: default
+  word_document: default
   pdf_document: default
 ---
 
@@ -21,7 +21,7 @@ often with visual methods. A statistical model can be used or not, but primarily
 data can tell us beyond the formal modeling or hypothesis testing task. 
 
 
-## Load the libraries
+## 0. Load the libraries
 
 ```{r Load the libraries, echo=TRUE}
 
@@ -78,6 +78,8 @@ summary(chd_genes$pLI)
 
 ### 3.1 Histogram of gene length
 
+*Histogram*: A histogram is an accurate representation of the distribution of numerical data.
+
 ```{r Histogram of gene length, echo=TRUE}
 
 # Histogram of gene length
@@ -89,6 +91,9 @@ ggplot(chd_genes, aes(x = gene_length)) +
 
 
 ### 3.2 Boxplot of plof per category
+
+*Boxplot*: A boxplot is a standardized way of displaying the distribution of data based on a five number summary:
+(minimum, first quartile (Q1), median, third quartile (Q3), and maximum).
 
 ```{r Boxplot of plof per category, echo=TRUE}
 
@@ -104,6 +109,9 @@ ggplot(chd_genes, aes(x = category, y = plof, fill=category)) +
 \newpage
 
 ### 3.3 Scatter plot of obs_syn vs obs_lof
+
+*Scatter plot*: A scatter plot (also called a scatterplot, scatter graph, scatter chart, scattergram, or scatter diagram)
+is a type of plot or mathematical diagram using Cartesian coordinates to display values for typically two variables.
 
 ```{r Scatter plot of obs_syn vs obs_lof, echo=TRUE}
 
@@ -131,6 +139,8 @@ ggplot(chd_genes, aes(x = obs_syn, y = exp_syn)) +
 \newpage
 
 ### 3.5 Density plot per category for plof metric
+
+*Density plot*: A density plot is a smoothed, continuous version of a histogram estimated from the data.
 
 ```{r Density plot per category for plof metric, echo=TRUE}
 
@@ -164,20 +174,28 @@ ggplot(chd_genes, aes(x = chromosome)) +
 
 ## 4. Statistical tests
 
+*T-test*: A t-test is a type of inferential statistic used to determine if there is a significant difference between
+the means of two groups, which may be related in certain features.
+
+*Wilcoxon test*: The Wilcoxon test, which refers to either the Rank Sum test or the Signed Rank test, is a non-parametric
+test that compares two groups. It is the non-parametric equivalent of the t-test.
+
 ```{r Statistical tests, echo=TRUE}
 
 
 # t.test
-t.test(pLI ~ category, data = chd_genes)
+t.test(pLI ~ category, data = chd_genes, alternative = "two.sided")
 
 # wilcox.test
-wilcox.test(pLI ~ category, data = chd_genes)
+wilcox.test(pLI ~ category, data = chd_genes, alternative = "two.sided")
 
 ```
 
 \newpage
 
 ## 5. Boxplot with statistical test
+
+Note: A R-package can be extended to add new functionalities. The ggpubr package extends ggplot2 functionalities.
 
 ```{r Boxplot with statistical test, echo=TRUE}
 
@@ -191,3 +209,10 @@ ggboxplot(chd_genes,
 
 ```
 
+## 6. R session information
+
+```{r R session information, echo=TRUE}
+
+sessionInfo()
+
+```

@@ -373,25 +373,25 @@ elements of a vector can be accessed using the index of the element.</p>
 <pre class="r"><code># Vectors
 
 # Create a vector
-x &lt;- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+v &lt;- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
 # Print the vector
-x</code></pre>
+v</code></pre>
 <pre><code>##  [1]  1  2  3  4  5  6  7  8  9 10</code></pre>
 <pre class="r"><code># Print the class of the vector
-class(x)</code></pre>
+class(v)</code></pre>
 <pre><code>## [1] &quot;numeric&quot;</code></pre>
 <pre class="r"><code># Print the length of the vector
-length(x)</code></pre>
+length(v)</code></pre>
 <pre><code>## [1] 10</code></pre>
 <pre class="r"><code># Print the first element of the vector
-x[1]</code></pre>
+v[1]</code></pre>
 <pre><code>## [1] 1</code></pre>
 <pre class="r"><code># Print the last element of the vector
-x[length(x)]</code></pre>
+v[length(v)]</code></pre>
 <pre><code>## [1] 10</code></pre>
 <pre class="r"><code># Print the first 5 elements of the vector
-x[1:5]</code></pre>
+v[1:5]</code></pre>
 <pre><code>## [1] 1 2 3 4 5</code></pre>
 </div>
 <div id="factors" class="section level2">
@@ -403,29 +403,29 @@ of a factor can be ordered in a different way.</p>
 <pre class="r"><code># Factors
 
 # Create a factor
-x &lt;- factor(c(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;a&quot;, &quot;b&quot;, &quot;c&quot;))
+fa &lt;- factor(c(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;a&quot;, &quot;b&quot;, &quot;c&quot;))
 
 # Print the factor
-x</code></pre>
+fa</code></pre>
 <pre><code>## [1] a b c a b c
 ## Levels: a b c</code></pre>
 <pre class="r"><code># Print the class of the factor
-class(x)</code></pre>
+class(fa)</code></pre>
 <pre><code>## [1] &quot;factor&quot;</code></pre>
 <pre class="r"><code># Print the levels of the factor
-levels(x)</code></pre>
+levels(fa)</code></pre>
 <pre><code>## [1] &quot;a&quot; &quot;b&quot; &quot;c&quot;</code></pre>
 <pre class="r"><code># Print the number of levels of the factor
-nlevels(x)</code></pre>
+nlevels(fa)</code></pre>
 <pre><code>## [1] 3</code></pre>
 <pre class="r"><code># Print the number of elements of the factor
-length(x)</code></pre>
+length(fa)</code></pre>
 <pre><code>## [1] 6</code></pre>
 <pre class="r"><code># reoder the levels of the factor
-x &lt;- factor(x, levels = c(&quot;c&quot;, &quot;b&quot;, &quot;a&quot;))
+fa &lt;- factor(fa, levels = c(&quot;c&quot;, &quot;b&quot;, &quot;a&quot;))
 
 # Print the levels of the factor
-levels(x)</code></pre>
+levels(fa)</code></pre>
 <pre><code>## [1] &quot;c&quot; &quot;b&quot; &quot;a&quot;</code></pre>
 <pre class="r"><code># End of the section</code></pre>
 </div>
@@ -533,10 +533,10 @@ the length of the array in each dimension.</p>
 <pre class="r"><code># Arrays
 
 # Create an array
-x &lt;- array(1:24, dim = c(3, 4, 2))
+a &lt;- array(1:24, dim = c(3, 4, 2))
 
 # Print the array
-x</code></pre>
+a</code></pre>
 <pre><code>## , , 1
 ## 
 ##      [,1] [,2] [,3] [,4]
@@ -551,32 +551,32 @@ x</code></pre>
 ## [2,]   14   17   20   23
 ## [3,]   15   18   21   24</code></pre>
 <pre class="r"><code># Print the class of the array
-class(x)</code></pre>
+class(a)</code></pre>
 <pre><code>## [1] &quot;array&quot;</code></pre>
 <pre class="r"><code># Print the number of rows, columns and layers of the array
-dim(x)</code></pre>
+dim(a)</code></pre>
 <pre><code>## [1] 3 4 2</code></pre>
 <pre class="r"><code># Print the first element of the array
-x[1, 1, 1]</code></pre>
+a[1, 1, 1]</code></pre>
 <pre><code>## [1] 1</code></pre>
 <pre class="r"><code># Print the last element of the array
-x[3, 4, 2]</code></pre>
+a[3, 4, 2]</code></pre>
 <pre><code>## [1] 24</code></pre>
 <pre class="r"><code># Print the first row of the array
-x[1, , ]</code></pre>
+a[1, , ]</code></pre>
 <pre><code>##      [,1] [,2]
 ## [1,]    1   13
 ## [2,]    4   16
 ## [3,]    7   19
 ## [4,]   10   22</code></pre>
 <pre class="r"><code># Print the first column of the array
-x[, 1, ]</code></pre>
+a[, 1, ]</code></pre>
 <pre><code>##      [,1] [,2]
 ## [1,]    1   13
 ## [2,]    2   14
 ## [3,]    3   15</code></pre>
 <pre class="r"><code># Print the first layer of the array
-x[,, 1]</code></pre>
+a[,, 1]</code></pre>
 <pre><code>##      [,1] [,2] [,3] [,4]
 ## [1,]    1    4    7   10
 ## [2,]    2    5    8   11
@@ -590,10 +590,10 @@ elements of a list are indexed from 1 to the length of the list.</p>
 <pre class="r"><code># Lists
 
 # Create a list
-x &lt;- list(1:10, &quot;a&quot;, TRUE, 1.5)
+l &lt;- list(1:10, &quot;a&quot;, TRUE, 1.5)
 
 # Print the list
-x</code></pre>
+l</code></pre>
 <pre><code>## [[1]]
 ##  [1]  1  2  3  4  5  6  7  8  9 10
 ## 
@@ -606,19 +606,19 @@ x</code></pre>
 ## [[4]]
 ## [1] 1.5</code></pre>
 <pre class="r"><code># Print the class of the list
-class(x)</code></pre>
+class(l)</code></pre>
 <pre><code>## [1] &quot;list&quot;</code></pre>
 <pre class="r"><code># Print the length of the list
-length(x)</code></pre>
+length(l)</code></pre>
 <pre><code>## [1] 4</code></pre>
 <pre class="r"><code># Print the first element of the list
-x[[1]]</code></pre>
+l[[1]]</code></pre>
 <pre><code>##  [1]  1  2  3  4  5  6  7  8  9 10</code></pre>
 <pre class="r"><code># Print the last element of the list
-x[[length(x)]]</code></pre>
+l[[length(l)]]</code></pre>
 <pre><code>## [1] 1.5</code></pre>
 <pre class="r"><code># Print the first 3 elements of the list
-x[1:3]</code></pre>
+l[1:3]</code></pre>
 <pre><code>## [[1]]
 ##  [1]  1  2  3  4  5  6  7  8  9 10
 ## 
@@ -638,10 +638,10 @@ x[1:3]</code></pre>
 <pre class="r"><code># Named lists
 
 # Create a named list
-x &lt;- list(a = 1:10, b = &quot;a&quot;, c = TRUE, d = 1.5)
+l &lt;- list(a = 1:10, b = &quot;a&quot;, c = TRUE, d = 1.5)
 
 # Print the list
-x</code></pre>
+l</code></pre>
 <pre><code>## $a
 ##  [1]  1  2  3  4  5  6  7  8  9 10
 ## 
@@ -654,19 +654,19 @@ x</code></pre>
 ## $d
 ## [1] 1.5</code></pre>
 <pre class="r"><code># Print the class of the list
-class(x)</code></pre>
+class(l)</code></pre>
 <pre><code>## [1] &quot;list&quot;</code></pre>
 <pre class="r"><code># Print the length of the list
-length(x)</code></pre>
+length(l)</code></pre>
 <pre><code>## [1] 4</code></pre>
 <pre class="r"><code># Print the first element of the list
-x[[1]]</code></pre>
+l[[1]]</code></pre>
 <pre><code>##  [1]  1  2  3  4  5  6  7  8  9 10</code></pre>
 <pre class="r"><code># Print the last element of the list
-x[[length(x)]]</code></pre>
+l[[length(l)]]</code></pre>
 <pre><code>## [1] 1.5</code></pre>
 <pre class="r"><code># Print the first 3 elements of the list
-x[1:3]</code></pre>
+l[1:3]</code></pre>
 <pre><code>## $a
 ##  [1]  1  2  3  4  5  6  7  8  9 10
 ## 
@@ -676,16 +676,16 @@ x[1:3]</code></pre>
 ## $c
 ## [1] TRUE</code></pre>
 <pre class="r"><code># Print the element of the list with the name &quot;a&quot;
-x[[&quot;a&quot;]]</code></pre>
+l[[&quot;a&quot;]]</code></pre>
 <pre><code>##  [1]  1  2  3  4  5  6  7  8  9 10</code></pre>
 <pre class="r"><code># Print the element of the list with the name &quot;b&quot;
-x[[&quot;b&quot;]]</code></pre>
+l[[&quot;b&quot;]]</code></pre>
 <pre><code>## [1] &quot;a&quot;</code></pre>
 <pre class="r"><code># Print the element of the list with the name &quot;c&quot;
-x[[&quot;c&quot;]]</code></pre>
+l[[&quot;c&quot;]]</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 <pre class="r"><code># Print the element of the list with the name &quot;d&quot;
-x[[&quot;d&quot;]]</code></pre>
+l[[&quot;d&quot;]]</code></pre>
 <pre><code>## [1] 1.5</code></pre>
 <pre class="r"><code># End of the section</code></pre>
 </div>
@@ -698,10 +698,10 @@ frame are indexed from 1 to the length of the data frame in each
 dimension. The columns of a data frame can be of different data
 types.</p>
 <pre class="r"><code># Create a data frame
-x &lt;- data.frame(a = 1:10, b = &quot;a&quot;, c = TRUE, d = 1.5)
+df &lt;- data.frame(a = 1:10, b = &quot;a&quot;, c = TRUE, d = 1.5)
 
 # Print the data frame
-x</code></pre>
+df</code></pre>
 <pre><code>##     a b    c   d
 ## 1   1 a TRUE 1.5
 ## 2   2 a TRUE 1.5
@@ -714,7 +714,7 @@ x</code></pre>
 ## 9   9 a TRUE 1.5
 ## 10 10 a TRUE 1.5</code></pre>
 <pre class="r"><code># Print the head of the data frame
-head(x)</code></pre>
+head(df)</code></pre>
 <pre><code>##   a b    c   d
 ## 1 1 a TRUE 1.5
 ## 2 2 a TRUE 1.5
@@ -723,7 +723,7 @@ head(x)</code></pre>
 ## 5 5 a TRUE 1.5
 ## 6 6 a TRUE 1.5</code></pre>
 <pre class="r"><code># Print the tail of the data frame
-tail(x)</code></pre>
+tail(df)</code></pre>
 <pre><code>##     a b    c   d
 ## 5   5 a TRUE 1.5
 ## 6   6 a TRUE 1.5
@@ -732,16 +732,16 @@ tail(x)</code></pre>
 ## 9   9 a TRUE 1.5
 ## 10 10 a TRUE 1.5</code></pre>
 <pre class="r"><code># Print the class of the data frame
-class(x)</code></pre>
+class(df)</code></pre>
 <pre><code>## [1] &quot;data.frame&quot;</code></pre>
 <pre class="r"><code># Print the number of rows and columns of the data frame
-dim(x)</code></pre>
+dim(df)</code></pre>
 <pre><code>## [1] 10  4</code></pre>
 <pre class="r"><code># Print the number of rows of the data frame
-nrow(x)</code></pre>
+nrow(df)</code></pre>
 <pre><code>## [1] 10</code></pre>
 <pre class="r"><code># Print the number of columns of the data frame
-ncol(x)</code></pre>
+ncol(df)</code></pre>
 <pre><code>## [1] 4</code></pre>
 <pre class="r"><code># End of the section</code></pre>
 <div id="operations-on-dataframes" class="section level3">

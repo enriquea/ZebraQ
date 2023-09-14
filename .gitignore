@@ -1,0 +1,19 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.DS_Store
+
+# knitr and R markdown default cache directories
+*_cache/
+/cache/
+
+# Example code in package build process
+*-Ex.R
+
+# R6 generated files
+.R6/
+
+# Log files
+*.log
+
