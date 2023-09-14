@@ -1,0 +1,82 @@
+---
+title: "Installation and setup"
+author: "Enrique Audain Martinez"
+date: "`r Sys.Date()`"
+output: 
+   html_document: default
+   pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+## Install all requeried packages for this hands-on session
+
+
+### 1. CRAN packages
+
+```{r Install CRAM packages, echo=TRUE, message=FALSE, warning=FALSE}
+
+# Install CRAN packages
+
+# ggplot2
+if(!require(ggplot2)){
+  install.packages("ggplot2", repos = "https://cloud.r-project.org")
+  library(ggplot2)
+}
+
+# ggpubr
+if(!require(ggpubr)){
+  install.packages("ggpubr", repos = "https://cloud.r-project.org")
+  library(ggpubr)
+}
+
+# dplyr
+if(!require(dplyr)){
+  install.packages("dplyr", repos = "https://cloud.r-project.org")
+  library(dplyr)
+}
+
+# RColorBrewer
+if(!require(RColorBrewer)){
+  install.packages("RColorBrewer", repos = "https://cloud.r-project.org")
+  library(RColorBrewer)
+}
+
+# openxlsx
+if(!require(openxlsx)){
+  install.packages("openxlsx", repos = "https://cloud.r-project.org")
+  library(openxlsx)
+}
+
+# microbenchmark
+if(!require(microbenchmark)){
+  install.packages("microbenchmark", repos = "https://cloud.r-project.org")
+  library(microbenchmark)
+}
+
+```
+
+### 2. Bioconductor packages
+
+```{r Install Bioconductor packages, echo=TRUE, message=FALSE, warning=FALSE}
+
+# Install Bioconductor packages
+
+# DeSeq2
+if (!require("BiocManager", quietly = FALSE))
+    install.packages("BiocManager")
+BiocManager::install("DESeq2", force = TRUE, update = FALSE)
+library(DESeq2)
+
+# EnhancedVolcano
+if (!require("BiocManager", quietly = FALSE))
+    install.packages("BiocManager")
+BiocManager::install("EnhancedVolcano", force = TRUE, update = FALSE)
+library(EnhancedVolcano)
+
+```
+
+
