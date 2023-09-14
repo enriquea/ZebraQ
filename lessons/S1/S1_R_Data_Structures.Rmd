@@ -1,0 +1,404 @@
+---
+title: "S1_R_Data_Structures"
+author: "Enrique Audain Martinez"
+date: "`r Sys.Date()`"
+output: 
+   html_document: default
+   pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Introcution to R data structures
+
+## 1. Vectors
+
+A vector is a collection of elements of the same data type. The elements of a vector 
+are indexed from 1 to the length of the vector. The elements of a vector can be 
+accessed using the index of the element.
+
+
+```{r Vectors, echo=TRUE}
+
+# Vectors
+
+# Create a vector
+x <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+
+# Print the vector
+x
+
+# Print the class of the vector
+class(x)
+
+# Print the length of the vector
+length(x)
+
+# Print the first element of the vector
+x[1]
+
+# Print the last element of the vector
+x[length(x)]
+
+# Print the first 5 elements of the vector
+x[1:5]
+
+```
+
+
+## 2. Factors
+
+A factor is a vector that can contain only predefined values, and is used to store 
+categorical data. The predefined values are called levels. The levels of a factor 
+are ordered alphabetically by default. The levels of a factor can be ordered in a different way.
+
+
+```{r Factors, echo=TRUE}
+
+# Factors
+
+# Create a factor
+x <- factor(c("a", "b", "c", "a", "b", "c"))
+
+# Print the factor
+x
+
+# Print the class of the factor
+class(x)
+
+# Print the levels of the factor
+levels(x)
+
+# Print the number of levels of the factor
+nlevels(x)
+
+# Print the number of elements of the factor
+length(x)
+
+# reoder the levels of the factor
+x <- factor(x, levels = c("c", "b", "a"))
+
+# Print the levels of the factor
+levels(x)
+
+
+# End of the section
+
+
+```
+
+
+## 3. Matrices
+
+A matrix is a collection of elements of the same data type arranged in a two-dimensional rectangular layout.
+The elements of a matrix are indexed from 1 to the number of rows and columns of the matrix. The elements 
+of a matrix can be accessed using the index of the element.
+
+
+```{r Matrices, echo=TRUE}
+
+# Matrices
+
+# Create a matrix
+x <- matrix(1:12, nrow = 3, ncol = 4)
+
+# Print the matrix
+x
+
+# Print the class of the matrix
+class(x)
+
+# Print the number of rows and columns of the matrix
+dim(x)
+
+# Print the first element of the matrix
+x[1, 1]
+
+# Print the last element of the matrix
+x[3, 4]
+
+# Print the first row of the matrix
+x[1, ]
+
+# Print the first column of the matrix
+x[, 1]
+
+# Explain the difference between a vector and a matrix
+# A vector is a collection of elements of the same data type arranged in a one-dimensional layout.
+# A matrix is a collection of elements of the same data type arranged in a two-dimensional rectangular layout.
+
+```
+
+
+### 3.1 Operations with matrices
+
+```{r Operations with matrices, echo=TRUE}
+
+# Operations with matrices
+
+# Multiplication of matrices
+# The number of columns of the first matrix must be equal to the number of rows of the second matrix.
+# The result of the multiplication of two matrices is a matrix with the same number of rows as the first
+# matrix and the same number of columns as the second matrix.
+
+# Create two matrices
+x <- matrix(1:12, nrow = 3, ncol = 4)
+y <- matrix(1:12, nrow = 4, ncol = 3)
+
+# Multiply the two matrices
+x %*% y
+
+# Transpose of a matrix
+# The transpose of a matrix is a matrix whose rows are the columns of the original matrix and 
+# whose columns are the rows of the original matrix.
+
+# Transpose the matrix x
+t(x)
+
+# Other matrix operations: rowSums, colSums, rowMeans, colMeans
+
+# rowSums
+# The rowSums function computes the sum of the elements of each row of a matrix.
+result <- rowSums(x)
+result
+
+# colSums
+# The colSums function computes the sum of the elements of each column of a matrix.
+result <- colSums(x)
+result
+
+# rowMeans
+# The rowMeans function computes the mean of the elements of each row of a matrix.
+result <- rowMeans(x)
+result
+
+# colMeans
+# The colMeans function computes the mean of the elements of each column of a matrix.
+result <- colMeans(x)
+result
+
+# End of the section
+
+```
+
+## 4. Arrays
+
+An array is a collection of elements of the same data type arranged in a multi-dimensional rectangular layout.
+In R, an array can have any number of dimensions.
+For example:
+A one-dimensional array is a vector.
+A two-dimensional array is a matrix.
+A three-dimensional array is a collection of matrices.
+The elements of an array are indexed from 1 to the length of the array in each dimension.
+
+
+```{r Arrays, echo=TRUE}
+
+# Arrays
+
+# Create an array
+x <- array(1:24, dim = c(3, 4, 2))
+
+# Print the array
+x
+
+# Print the class of the array
+class(x)
+
+# Print the number of rows, columns and layers of the array
+dim(x)
+
+# Print the first element of the array
+x[1, 1, 1]
+
+# Print the last element of the array
+x[3, 4, 2]
+
+# Print the first row of the array
+x[1, , ]
+
+# Print the first column of the array
+x[, 1, ]
+
+# Print the first layer of the array
+x[,, 1]
+
+# End of the section
+
+
+```
+
+
+## 5. Lists
+
+A list is a collection of elements of different data types. The elements of 
+a list are indexed from 1 to the length of the list.
+
+```{r Lists, echo=TRUE}
+
+# Lists
+
+# Create a list
+x <- list(1:10, "a", TRUE, 1.5)
+
+# Print the list
+x
+
+# Print the class of the list
+class(x)
+
+# Print the length of the list
+length(x)
+
+# Print the first element of the list
+x[[1]]
+
+# Print the last element of the list
+x[[length(x)]]
+
+# Print the first 3 elements of the list
+x[1:3]
+
+# Differences between two [[ ]] and one [ ]:
+# x[[1]] returns the first element of the list.
+# x[1] returns a list with the first element of the list.
+
+
+# End of the section
+```
+
+### 5.1 Named lists
+
+```{r Named lists, echo=TRUE}
+  
+# Named lists
+
+# Create a named list
+x <- list(a = 1:10, b = "a", c = TRUE, d = 1.5)
+
+# Print the list
+x
+
+# Print the class of the list
+class(x)
+
+# Print the length of the list
+length(x)
+
+# Print the first element of the list
+x[[1]]
+
+# Print the last element of the list
+x[[length(x)]]
+
+# Print the first 3 elements of the list
+x[1:3]
+
+# Print the element of the list with the name "a"
+x[["a"]]
+
+# Print the element of the list with the name "b"
+x[["b"]]
+
+# Print the element of the list with the name "c"
+x[["c"]]
+
+# Print the element of the list with the name "d"
+x[["d"]]
+
+# End of the section
+
+```
+
+
+## 6. Data frames
+
+A data frame is a collection of elements of different data types arranged in a two-dimensional 
+rectangular layout. The elements of a data frame are indexed from 1 to the length of the data 
+frame in each dimension. The columns of a data frame can be of different data types.
+
+
+```{r Data frames, echo=TRUE}
+
+
+# Create a data frame
+x <- data.frame(a = 1:10, b = "a", c = TRUE, d = 1.5)
+
+# Print the data frame
+x
+
+# Print the head of the data frame
+head(x)
+
+# Print the tail of the data frame
+tail(x)
+
+# Print the class of the data frame
+class(x)
+
+# Print the number of rows and columns of the data frame
+dim(x)
+
+# Print the number of rows of the data frame
+nrow(x)
+
+# Print the number of columns of the data frame
+ncol(x)
+
+# End of the section
+
+
+```
+
+### 6.1 Operations on dataframes
+
+```{r Operations on dataframes, echo=TRUE}
+
+# 1. Filtering dataframes
+
+# load the iris dataset
+data(iris)
+
+
+# Filter dataframes using the subset function
+# Filter the dataframe to get the rows where the Sepal.Length is greater than 5
+# and the Sepal.Width is greater than 3.5
+df <- subset(iris, Sepal.Length > 5 & Sepal.Width > 3.5)
+
+# print the head of the dataframe
+head(df)
+
+# Filter dataframes using the [] operator
+# Filter the dataframe to get the rows where the Sepal.Length is greater than 5
+# and the Sepal.Width is greater than 3.5
+
+df <- iris[iris$Sepal.Length > 5 & iris$Sepal.Width > 3.5, ]
+
+# print the head of the dataframe
+head(df)
+
+# 2. Aggregating dataframes using the dplyr package
+
+# load the iris dataset
+data(iris)
+
+# load the dplyr package
+library(dplyr)
+
+# Group the dataframe by Species and get the mean of the Sepal.Length
+df <- iris %>% group_by(Species) %>% summarise(mean(Sepal.Length))
+
+# print the dataframe
+df
+
+# Group the dataframe by Species and get the mean of the Sepal.Length and Sepal.Width
+df <- iris %>% group_by(Species) %>% summarise(mean(Sepal.Length), mean(Sepal.Width))
+
+# print the dataframe
+df
+
+# End of the section
+
+```
