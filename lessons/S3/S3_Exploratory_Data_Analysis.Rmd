@@ -2,7 +2,10 @@
 title: "S3_Exploratory_Data_Analysis"
 author: "Enrique Audain Martinez"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -18,17 +21,30 @@ often with visual methods. A statistical model can be used or not, but primarily
 data can tell us beyond the formal modeling or hypothesis testing task. 
 
 
+## Load the libraries
+
+```{r Load the libraries, echo=TRUE}
+
+# Load the ggplot2 library
+library(ggplot2)
+library(ggpubr) 
+
+```
+
+
 ## 1. Load the data
 
 ```{r Load the data, echo=TRUE}
 
 # Load the CHD gene annotation data
-chd_genes <- read.delim("~/projects/local/ZebraQ/data/chd_genes.annotations.tsv", header = TRUE, sep = "\t")
+chd_genes <- read.delim("../../data/chd_genes.annotations.tsv", header = TRUE, sep = "\t")
 
 # print the head of the data frame
 head(chd_genes)
 
 ```
+
+\newpage
 
 ## 2. Summarize the data
 
@@ -56,62 +72,95 @@ summary(chd_genes$pLI)
 
 ```
 
-## 3. Visulization of the data using ggplo2
+\newpage
 
-```{r Visulization of the data, echo=TRUE}
+## 3. Visulization of the data using ggplot2
 
-# Visulization of the data using ggplo2
+### 3.1 Histogram of gene length
 
-# Load the ggplot2 library
-library(ggplot2)
+```{r Histogram of gene length, echo=TRUE}
 
 # Histogram of gene length
 ggplot(chd_genes, aes(x = gene_length)) + 
   geom_histogram() +
   labs(title = "Histogram of gene length", x = "Gene length", y = "Count")
 
-# Histogram of gene length log-transformed
-ggplot(chd_genes, aes(x = log2(gene_length))) + 
-  geom_histogram() +
-  labs(title = "Histogram of gene length log-transformed", x = "Gene length", y = "Count")
+```
+
+
+### 3.2 Boxplot of plof per category
+
+```{r Boxplot of plof per category, echo=TRUE}
 
 # Boxplot per category
-ggplot(chd_genes, aes(x = category, y = oe_lof_upper)) + 
-  geom_boxplot(fill = "blue", color = "black") +
-  labs(title = "Boxplot of oe_lof per category", x = "category", y = "oe_lof")
+ggplot(chd_genes, aes(x = category, y = plof, fill=category)) + 
+  geom_boxplot() +
+  labs(title = "Boxplot of plof per category", x = "category", y = "plof")
 
+
+```
+
+
+\newpage
+
+### 3.3 Scatter plot of obs_syn vs obs_lof
+
+```{r Scatter plot of obs_syn vs obs_lof, echo=TRUE}
 
 # Scatter plot
-# plot the pLI score vs the oe_lof score
-ggplot(chd_genes, aes(x = oe_mis, y = oe_lof)) + 
+ggplot(chd_genes, aes(x = obs_syn, y = obs_lof)) + 
   geom_point() +
-  labs(title = "Scatter plot of pLI vs oe_lof", x = "pLI", y = "oe_lof")
+  labs(title = "Scatter plot of obs_syn vs obs_lof")
 
+```
+
+### 3.4 Scatter plot with regression line and correlation coefficient
+
+```{r Scatter plot with regression line and correlation coefficient, echo=TRUE}
 
 # Scatter plot with regression line and correlation coefficient
 ggplot(chd_genes, aes(x = obs_syn, y = exp_syn)) + 
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "Scatter plot of pLI vs oe_lof", x = "pLI", y = "oe_lof") +
+  labs(title = "Scatter plot with regression line") +
   stat_cor(method = "pearson", label.x = 100, label.y = 1500)
 
+```
 
-# Density plot per category for pLI metric
-ggplot(chd_genes, aes(x = oe_lof_upper, fill = category)) + 
+
+\newpage
+
+### 3.5 Density plot per category for plof metric
+
+```{r Density plot per category for plof metric, echo=TRUE}
+
+# Density plot per category for plof metric
+ggplot(chd_genes, aes(x = plof, fill = category)) + 
   geom_density(alpha = 0.5) +
-  labs(title = "Density plot of pLI per category", x = "pLI", y = "Density")
+  labs(title = "Density plot")
 
-# Bar plot - count number of genes per category
-ggplot(chd_genes, aes(x = category, fill = category)) + 
-  geom_bar() +
-  labs(title = "Bar plot of number of genes per category", x = "category", y = "Count")
-
-# Bar plot - count number of genes per chromosome
-ggplot(chd_genes, aes(x = chromosome)) + 
-  geom_bar(fill = "blue") +
-  labs(title = "Bar plot of number of genes per chromosome", x = "chromosome", y = "Count")
 
 ```
+
+
+### 3.6 Bar plot
+
+```{r Bar plot - count number of genes per category, echo=TRUE}
+
+# count number of genes per category
+ggplot(chd_genes, aes(x = category, fill = category)) + 
+  geom_bar() +
+  labs(title = "Bar plot of number of genes per category")
+
+# count number of genes per chromosome
+ggplot(chd_genes, aes(x = chromosome)) + 
+  geom_bar() +
+  labs(title = "Bar plot of number of genes per chromosome")
+
+```
+
+
+\newpage
 
 ## 4. Statistical tests
 
@@ -121,34 +170,24 @@ ggplot(chd_genes, aes(x = chromosome)) +
 # t.test
 t.test(pLI ~ category, data = chd_genes)
 
-# ANOVA
-anova(lm(pLI ~ category, data = chd_genes))
-
 # wilcox.test
 wilcox.test(pLI ~ category, data = chd_genes)
 
 ```
 
+\newpage
 
-## 5. Boxplot of Sepal Length by Species with t.test using ggpubr
+## 5. Boxplot with statistical test
 
-```{r Boxplot of Sepal Length by Species with t.test, echo=TRUE}
+```{r Boxplot with statistical test, echo=TRUE}
 
-# Boxplot of Sepal Length by Species with t.test using ggpubr
-
-# Load the ggpubr library
-library(ggpubr)
-
-# Boxplot of Sepal Length by Species
 ggboxplot(chd_genes, 
           x = "category", 
-          y = "oe_lof_upper",
+          y = "plof",
           color = "category", 
           palette = "jco") +
   stat_compare_means(method = "wilcox.test", label.y = 2) +
-  labs(title = "Boxplot of oe_lof_upper by category", x = "category", y = "oe_lof_upper")
+  labs(title = "Boxplot of plof by category")
 
 ```
 
-
-```{r Boxplot of Sepal Length by Species, echo=TRUE}
