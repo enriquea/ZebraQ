@@ -1,0 +1,134 @@
+---
+title: "S2_DESeq_visualization"
+author: "Enrique Audain Martinez"
+date: "`r Sys.Date()`"
+output: 
+   html_document: default
+   pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## 1. Load libraries
+
+```{r load libraries, echo = TRUE, message=FALSE, warning=FALSE}
+
+library(DESeq2, quietly = TRUE)
+library(ggplot2, quietly = TRUE)
+library(RColorBrewer, quietly = TRUE)
+library(EnhancedVolcano, quietly = TRUE)  
+
+```
+
+
+## 2. Load data
+
+```{r load data, echo = TRUE}
+
+# Load DESeq2 object from RDS file
+dds = readRDS("../../results/dds.rds")
+
+# print info about the object
+dds
+
+# get results table
+res = results(dds)
+
+# print first 6 rows of results table
+head(res)
+
+```
+
+
+## 3. Plot counts for a particular gene 
+
+```{r Plot counts for a particular gene, echo = TRUE}
+
+d <- plotCounts(dds, gene="capzb", intgroup="condition", 
+                returnData=TRUE)
+ggplot(d, aes(x=condition, y=count, color=condition)) + 
+  geom_point(position=position_jitter(w=0.1,h=0), size=2) + 
+  scale_y_log10(breaks=c(25,100,400))
+
+
+```
+
+
+## 4. Heatmap of the count matrix 
+
+```{r Heatmap of the count matrix, echo = TRUE, margins = TRUE, fig.width=5, fig.height=5}
+
+# Select the top 20 highly variable genes
+high_variable_genes <- order(rowMeans(counts(dds, normalized=TRUE)),
+                             decreasing=TRUE)[1:20]
+
+# get variance stabilized counts
+vsd = varianceStabilizingTransformation(dds)
+
+# Plot heat map of the count matrix
+stats::heatmap(as.matrix(assay(vsd)[high_variable_genes,]), 
+        Rowv=NA, Colv=NA,
+        scale="column",
+        col = brewer.pal(9, "Blues"),  
+        margins=c(10,8),
+        main="Top 20 most variable genes")
+
+
+```
+
+## 5. Plot samples distances 
+
+```{r Plot samples distances, echo = TRUE}
+
+# get sample distances
+sampleDists <- dist(t(assay(dds)))
+
+# plot heat map of sample distances
+stats::heatmap(as.matrix(sampleDists),
+        col = colorRampPalette(rev(brewer.pal(9, "Blues")))(255),
+        labCol = colnames(counts(dds)), 
+        labRow = NULL,
+        margins = c(10,10), 
+        main = "Sample distances",
+        )
+
+```
+
+
+## 6. plot PCA
+
+```{r plot PCA, echo = TRUE}
+
+# plot PCA
+plotPCA(vsd, intgroup = "condition")
+
+```
+
+
+## 7. Volcano plot
+
+```{r Volcano plot, echo = TRUE, fig.width = 7, fig.height = 7}
+
+# volcano plot
+EnhancedVolcano(res, 
+                lab = rownames(res), 
+                x = 'log2FoldChange', 
+                y = 'pvalue',
+                xlim = c(-4, 4),
+                ylim = c(0, 10),
+                pCutoff = 0.001, 
+                FCcutoff = 2.5,
+                pointSize = 2.5, 
+                labSize = 2.5,
+                col = c("grey", "grey", "blue", "orange"),
+                title = "DE genes - MT vs WT 48hpf")
+
+```
+
+## 8. Print R session info
+
+```{r print out R session info, echo = TRUE}
+sessionInfo()
+```

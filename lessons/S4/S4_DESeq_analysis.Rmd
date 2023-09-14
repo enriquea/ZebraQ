@@ -1,0 +1,204 @@
+---
+title: "S1_RNAseq_analysis"
+author: "Enrique Audain Martinez"
+date: "`r Sys.Date()`"
+output: 
+   html_document: default
+   pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Load libraries
+
+```{r load libraries, echo = TRUE, message=FALSE, warning=FALSE}
+
+library(DESeq2, quietly = TRUE) 
+library(ggplot2, quietly = TRUE)
+library(RColorBrewer, quietly = TRUE)
+
+```
+
+
+## 0. Define workflow parameters
+
+```{r setup workflow parameters, echo = TRUE}
+
+# time point
+time_point = '48h'
+
+# define the reference group
+ref_group = 'WT'
+
+```
+
+## 1. Import sample metadata
+
+```{r import sample metadata, echo = TRUE}
+
+z_ann <- read.delim("~/projects/local/ZebraQ/data/samplesheet.tsv", 
+                    stringsAsFactors=FALSE)
+
+row.names(z_ann) <- z_ann$sample_id
+
+# print the first 10 rows of the sample metadata
+head(z_ann, 10)
+
+```
+
+## 2. Prepare count matrix
+
+```{r prepare count matrix, echo = TRUE}
+
+# import count matrix
+z_counts <- read.delim(
+  "~/projects/local/ZebraQ/data/salmon.merged.gene_counts.filtered.tsv", 
+  stringsAsFactors=FALSE
+  )
+
+# add row names
+row.names(z_counts) <- z_counts$gene_id
+
+# remove gene_id column
+z_counts$gene_id <- NULL
+
+# sort columns by samples as in the sample metadata
+z_counts <- z_counts[, z_ann$sample_id]
+
+# convert to matrix of integers
+z_counts <- as.matrix(z_counts)
+mode(z_counts) <- "integer"
+
+# print the first 6 rows and columns of the count matrix
+z_counts[1:6, 1:6]
+
+```
+
+
+## 3. Set up experimental design
+
+```{r set up experimental design, echo = TRUE}
+
+# import library DESseq2
+library(DESeq2)
+
+# create a DESeqDataSet object
+dds <- DESeqDataSetFromMatrix(countData = z_counts,
+                              colData = z_ann,
+                              design = ~ condition)
+
+
+# The DESeqDataSetFromMatrix creates a DESeqDataSet object from a matrix of integer values,
+# a data.frame of sample metadata and a formula which describes the design of the experiment.
+#
+# DESeqDataSet is used to store the input values, intermediate calculations and results of 
+# an analysis of differential expression. 
+# The DESeqDataSet class enforces non-negative integer values in the "counts" matrix stored
+# as the first element in the assay list. 
+# In addition, a formula which specifies the design of the experiment must be provided.
+
+
+# How do I get help on the DESeqDataSet object?
+?DESeqDataSet
+
+# print a description of the DESeqDataSet object
+dds
+
+```
+
+## 4. Adds features names to the DESeqDataSet object
+
+```{r adds features names to the DESeqDataSet object, echo = TRUE}
+
+featureData <- data.frame(gene=rownames(z_counts))
+mcols(dds) <- DataFrame(mcols(dds), featureData)
+mcols(dds)
+
+```
+
+
+## 5. Remove gene with low counts
+
+```{r remove gene with low counts, echo = TRUE}
+
+genes_to_keep <- rowSums(counts(dds)) >= 10
+dds <- dds[genes_to_keep,]
+
+# print the number of genes removed
+print(paste0("Number of genes removed: ", sum(!genes_to_keep)))
+
+# print the number of genes remaining
+print(paste0("Number of genes remaining: ", nrow(dds)))  
+
+
+```
+
+
+## 6. Convert condition to factor
+
+```{r convert condition to factor, echo = TRUE}
+
+# convert condition to factor
+dds$condition <- factor(dds$condition, levels = c("WT", "MT"))
+
+```
+
+
+## 7. Run DESeq analysis
+
+```{r run DESeq analysis, echo = TRUE}
+
+# run DESeq analysis
+dds <- DESeq(dds)
+
+# print class of the DESeq object
+class(dds)
+
+# print the first 6 rows of the DESeq object
+head(dds)
+```
+
+## 8. Extract results as data frame
+
+```{r extract results as data frame, echo = TRUE}
+
+# get the name for the comarision performed and print out
+comparision <- resultsNames(dds)[2]
+print(paste0("Comparision performed: ", comparision))
+
+# extract results as data frame
+res <- results(dds, name = comparision)
+res <- data.frame(gene = row.names(res), res)
+
+# print the first 6 rows of the results data frame
+head(res)
+
+```
+
+
+## 9. Export results
+
+```{r export results, echo = TRUE}
+
+# export dds object
+saveRDS(dds, file = "dds.rds")
+
+# export results data frame
+write.table(res, file = "DESeq2_results.tsv",
+            sep = "\t", quote = FALSE, row.names = FALSE)
+
+# export results as a excel file
+library(openxlsx)
+write.xlsx(res, file = "DESeq2_results.xlsx",
+           rowNames = FALSE)
+
+```
+
+
+## 10. Print R session info
+
+```{r print out R session info, echo = TRUE}
+sessionInfo()
+```
