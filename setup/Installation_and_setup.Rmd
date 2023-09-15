@@ -45,10 +45,10 @@ if(!require(RColorBrewer)){
   library(RColorBrewer)
 }
 
-# openxlsx
-if(!require(openxlsx)){
-  install.packages("openxlsx", repos = "https://cloud.r-project.org")
-  library(openxlsx)
+# readxl
+if(!require(readxl)){
+  install.packages("readxl", repos = "https://cloud.r-project.org")
+  library(readxl)
 }
 
 # microbenchmark

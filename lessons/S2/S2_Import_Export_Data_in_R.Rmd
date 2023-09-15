@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r Load libraries, echo=TRUE}
 
-library(openxlsx) 
+library(readxl) 
 library(microbenchmark)
 
 ```
@@ -88,12 +88,12 @@ write.table(iris, file = "iris.txt")
 
 ## 3. Import data from Excel
 
-```{r Import_data_from_Excel, fig.height=6, fig.width=6, message=TRUE, paged.print=TRUE}
+```{r Import_data_from_Excel, echo=TRUE}
 
 # 3. Import data from Excel
 
 # Import data from Excel
-df <- read.xlsx("../../data/chd_genes.annotations.xlsx", sheet = 1)
+df <- read_excel("../../data/chd_genes.annotations.xlsx")
 
 # print the head of the data frame
 head(df)
@@ -105,30 +105,7 @@ head(df)
 
 \newpage
 
-## 4. Export data to Excel
-
-```{r Export_data_to_Excel, fig.height=6, fig.width=6, message=TRUE, paged.print=TRUE}
-
-# 4. Export Iris data to Excel
-
-# load Iris data set
-data(iris)
-
-# print the head of the data frame
-head(iris)
-
-# Export data to Excel
-write.xlsx(iris, file = "iris.xlsx")
-
-# End of the section
-
-
-```
-
-
-\newpage
-
-## 5. Evaluating speed performance of import functions.
+## 4. Evaluating speed performance of import functions.
 
 Note: Differences between <read.csv>, <read.table> and <read.delim>
 read.csv is a special case of read.table, which is a special case of read.delim.
