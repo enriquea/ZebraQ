@@ -18,6 +18,7 @@ knitr::opts_chunk$set(echo = FALSE)
 library(DESeq2, quietly = TRUE) 
 library(ggplot2, quietly = TRUE)
 library(RColorBrewer, quietly = TRUE)
+library(openxlsx, quietly = TRUE)
 
 # time point
 time_point = '48h'
@@ -183,7 +184,6 @@ write.table(res, file = "../../results/DESeq2_results.tsv",
             sep = "\t", quote = FALSE, row.names = FALSE)
 
 # export results as a excel file
-library(openxlsx)
 write.xlsx(res, file = "../../results/DESeq2_results.xlsx",
            rowNames = FALSE)
 
