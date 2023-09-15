@@ -51,6 +51,20 @@ if(!require(readxl)){
   library(readxl)
 }
 
+# openxlsx
+if(!require(openxlsx)){
+  install.packages("openxlsx", repos = "https://cloud.r-project.org")
+  library(openxlsx)
+}
+
+# devtools
+if(!require(devtools)){
+  install.packages("devtools", repos = "https://cloud.r-project.org")
+  library(devtools)
+}
+
+
+
 # microbenchmark
 if(!require(microbenchmark)){
   install.packages("microbenchmark", repos = "https://cloud.r-project.org")
