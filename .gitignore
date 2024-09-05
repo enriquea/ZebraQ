@@ -17,3 +17,6 @@
 # Log files
 *.log
 
+# Local folder with data and documents
+/local/
+
