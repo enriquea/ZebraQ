@@ -8,7 +8,7 @@ This is a course intended for beginners in R and RNAseq data analysis. For more 
 
 The course is divided in two parts:
 
-1.  Introduction to R
+1.  Basic introduction to R environment
 
 -   S1: data structures and basic operations.
 -   S2: data import and export.
@@ -19,7 +19,7 @@ The course is divided in two parts:
 -   S4: RNA-seq data analysis with DESeq2.
 -   S5: Exploring and visualizing RNA-seq data.
 
-`/lessons` folder contains the Rmarkdown files for each lesson.
+`/lessons` folder contains the Rmarkdown files and rendered html for each lesson.
 
 ## Installation
 
@@ -27,7 +27,7 @@ All required R-packages can be installed following `setup\Installation_and_setup
 
 ## Materials
 
-Link to supporting slides: `/slides/Practical_Section_II.pdf`
+Link to supporting slides: `/slides/Practical_Section_I.pdf`
 
 ## Dataset
 
