@@ -169,6 +169,16 @@ ggplot(chd_genes, aes(x = chromosome)) +
 
 ```
 
+```{r Bar plot - count number of genes per chromosome ordered, echo=TRUE}
+
+# count number of genes per chromosome ordered (1,2,...,22,X,Y)
+ggplot(chd_genes, aes(x = factor(chromosome, levels = c(1:22, "X", "Y")))) + 
+  geom_bar() +
+  ylab("Number of genes") +
+  xlab("Chromosome") +
+  labs(title = "Bar plot of number of genes per chromosome ordered")
+
+```
 
 \newpage
 

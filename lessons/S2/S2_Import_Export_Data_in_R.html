@@ -11,7 +11,7 @@
 
 <meta name="author" content="Enrique Audain Martinez" />
 
-<meta name="date" content="2023-09-15" />
+<meta name="date" content="2024-09-05" />
 
 <title>S2_IO_in_R</title>
 
@@ -299,23 +299,17 @@ overflow-y: auto;
 border: 1px solid #ddd;
 border-radius: 4px;
 }
-.tabset-dropdown > .nav-tabs > li.active:before {
-content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+content: "\e259";
 font-family: 'Glyphicons Halflings';
 display: inline-block;
 padding: 10px;
 border-right: 1px solid #ddd;
 }
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-content: "";
-border: none;
-}
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-content: "";
+content: "\e258";
 font-family: 'Glyphicons Halflings';
-display: inline-block;
-padding: 10px;
-border-right: 1px solid #ddd;
+border: none;
 }
 .tabset-dropdown > .nav-tabs > li.active {
 display: block;
@@ -358,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">S2_IO_in_R</h1>
 <h4 class="author">Enrique Audain Martinez</h4>
-<h4 class="date">2023-09-15</h4>
+<h4 class="date">2024-09-05</h4>
 
 </div>
 
@@ -504,11 +498,11 @@ microbenchmark(
                         sep = &quot;\t&quot;, 
                         header = TRUE)
   )</code></pre>
-<pre><code>## Unit: milliseconds
+<pre><code>## Unit: microseconds
 ##                                                                               expr
 ##  read.csv(&quot;../../data/chd_genes.annotations.tsv&quot;, sep = &quot;\\t&quot;,      header = TRUE)
-##       min       lq     mean   median      uq      max neval
-##  1.009541 1.024332 1.170163 1.142698 1.33904 1.709738   100</code></pre>
+##      min       lq     mean   median       uq      max neval
+##  959.681 1014.842 1152.046 1099.049 1307.731 1655.738   100</code></pre>
 <pre class="r"><code># Import data using the read.table function
 microbenchmark(
   read.table(&quot;../../data/chd_genes.annotations.tsv&quot;,
@@ -518,8 +512,8 @@ microbenchmark(
 <pre><code>## Unit: microseconds
 ##                                                                                 expr
 ##  read.table(&quot;../../data/chd_genes.annotations.tsv&quot;, sep = &quot;\\t&quot;,      header = TRUE)
-##      min       lq     mean   median       uq      max neval
-##  968.318 1031.082 1200.054 1205.876 1321.581 1926.795   100</code></pre>
+##      min       lq     mean   median       uq    max neval
+##  964.641 1062.802 1224.861 1264.966 1324.158 1831.8   100</code></pre>
 <pre class="r"><code># Import data using the read.delim function
 microbenchmark(
   read.delim(&quot;../../data/chd_genes.annotations.tsv&quot;,
@@ -529,8 +523,8 @@ microbenchmark(
 <pre><code>## Unit: microseconds
 ##                                                                                 expr
 ##  read.delim(&quot;../../data/chd_genes.annotations.tsv&quot;, sep = &quot;\\t&quot;,      header = TRUE)
-##      min      lq     mean   median       uq      max neval
-##  912.362 978.036 1122.723 1131.109 1280.662 1640.273   100</code></pre>
+##      min       lq     mean   median       uq      max neval
+##  941.905 1005.927 1159.244 1179.348 1305.887 1719.393   100</code></pre>
 <pre class="r"><code># End of the section</code></pre>
 </div>
 </div>

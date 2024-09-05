@@ -356,7 +356,7 @@ ncol(df)
 
 ```{r Operations on dataframes, echo=TRUE}
 
-# 1. Filtering dataframes
+# 1. Filtering dataframes (base R)
 
 # load the iris dataset
 data(iris)
@@ -379,13 +379,30 @@ df <- iris[iris$Sepal.Length > 5 & iris$Sepal.Width > 3.5, ]
 # print the head of the dataframe
 head(df)
 
+
+# 1.1 Filtering dataframes (dplyr)
+
+# load the dplyr package
+library(dplyr)
+
+# Filter the dataframe to get the rows where the Sepal.Length is greater than 5
+# and the Sepal.Width is greater than 3.5
+df <- iris %>% filter(Sepal.Length > 5 & Sepal.Width > 3.5)
+
+
+# filter using pipes
+df <- iris %>% 
+  filter(Sepal.Length > 5) %>% 
+  filter(Sepal.Width > 3.5) %>%
+  filter(Species == "setosa")
+
+# print df
+df
+
 # 2. Aggregating dataframes using the dplyr package
 
 # load the iris dataset
 data(iris)
-
-# load the dplyr package
-library(dplyr)
 
 # Group the dataframe by Species and get the mean of the Sepal.Length
 df <- iris %>% group_by(Species) %>% summarise(mean(Sepal.Length))
