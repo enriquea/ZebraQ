@@ -19,7 +19,7 @@ The course is divided in two parts:
 -   S4: RNA-seq data analysis with DESeq2.
 -   S5: Exploring and visualizing RNA-seq data.
 
-`/lessons` folder contains the Rmarkdown files and rendered html for each lesson.
+Rmarkdown files and rendered html for each lesson can be found in [`/lessons`](lessons/).
 
 ## Installation
 
@@ -33,7 +33,7 @@ Link to supporting slides: `/slides/Practical_Section_II.pdf`
 
 *Disclaimer: The data used in this course is intended to be used for educational purposes only.*
 
-`/data` folder contains the following files:
+[`/data`](data/) folder contains the following files:
 
 -   Genes associated with CHD with functional annotations: `data/chd_genes.annotations.tsv`
 
@@ -43,6 +43,10 @@ Link to supporting slides: `/slides/Practical_Section_II.pdf`
 
 1.  [R for Data Science](https://r4ds.had.co.nz/)
 2.  [DESeq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
+
+## Mantainer
+
+Enrique Audain (enrique.audain@uni-oldenburg.de)
 
 ## Have fun!
 
