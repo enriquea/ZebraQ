@@ -15,10 +15,13 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ```{r load libraries, echo = TRUE, message=FALSE, warning=FALSE}
 
+# library for differential expression analysis
 library(DESeq2, quietly = TRUE)
+
+# libraries for visualization
 library(ggplot2, quietly = TRUE)
 library(RColorBrewer, quietly = TRUE)
-library(EnhancedVolcano, quietly = TRUE)  
+library(EnhancedVolcano, quietly = TRUE)
 
 ```
 
@@ -46,6 +49,7 @@ head(res)
 
 ```{r Plot counts for a particular gene, echo = TRUE}
 
+# plot counts for a particular gene
 d <- plotCounts(dds, gene="capzb", intgroup="condition", 
                 returnData=TRUE)
 ggplot(d, aes(x=condition, y=count, color=condition)) + 
@@ -130,5 +134,6 @@ EnhancedVolcano(res,
 ## 8. Print R session info
 
 ```{r print out R session info, echo = TRUE}
+# Always good practice to print out the R session info for reproducibility
 sessionInfo()
 ```

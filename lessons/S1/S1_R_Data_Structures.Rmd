@@ -352,7 +352,7 @@ ncol(df)
 
 ```
 
-### 6.1 Operations on dataframes
+### 6.1 Operations on dataframes (base R)
 
 ```{r Operations on dataframes, echo=TRUE}
 
@@ -379,6 +379,12 @@ df <- iris[iris$Sepal.Length > 5 & iris$Sepal.Width > 3.5, ]
 # print the head of the dataframe
 head(df)
 
+# End of the section
+
+```
+### 6.2 Operations on dataframes (dplyr)
+
+```{r Operations on dataframes - (dplyr), echo=TRUE}
 
 # 1.1 Filtering dataframes (dplyr)
 

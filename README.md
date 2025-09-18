@@ -2,7 +2,7 @@
 
 ## Introduction to R and bulk-RNAseq data analysis using DESeq2
 
-This is a course intended for beginners in R and RNAseq data analysis. For more advanced users we recommend the DESeq2 tutorial: <https://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html>.
+This is a introductory course intended for beginners in R and RNAseq data analysis. For more advanced users we recommend the DESeq2 tutorial: <https://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html>.
 
 ## Course structure
 
@@ -27,7 +27,7 @@ All required R-packages can be installed following `setup\Installation_and_setup
 
 ## Materials
 
-Link to supporting slides: `/slides/Practical_Section_I.pdf`
+Link to supporting slides: `/slides/Practical_Section_II.pdf`
 
 ## Dataset
 

@@ -11,7 +11,7 @@
 
 <meta name="author" content="Enrique Audain Martinez" />
 
-<meta name="date" content="2024-09-05" />
+<meta name="date" content="2025-09-18" />
 
 <title>S2_IO_in_R</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">S2_IO_in_R</h1>
 <h4 class="author">Enrique Audain Martinez</h4>
-<h4 class="date">2024-09-05</h4>
+<h4 class="date">2025-09-18</h4>
 
 </div>
 
@@ -502,7 +502,7 @@ microbenchmark(
 ##                                                                               expr
 ##  read.csv(&quot;../../data/chd_genes.annotations.tsv&quot;, sep = &quot;\\t&quot;,      header = TRUE)
 ##      min       lq     mean   median       uq      max neval
-##  959.681 1014.842 1152.046 1099.049 1307.731 1655.738   100</code></pre>
+##  958.238 1039.071 1211.233 1196.497 1391.849 1768.101   100</code></pre>
 <pre class="r"><code># Import data using the read.table function
 microbenchmark(
   read.table(&quot;../../data/chd_genes.annotations.tsv&quot;,
@@ -512,8 +512,8 @@ microbenchmark(
 <pre><code>## Unit: microseconds
 ##                                                                                 expr
 ##  read.table(&quot;../../data/chd_genes.annotations.tsv&quot;, sep = &quot;\\t&quot;,      header = TRUE)
-##      min       lq     mean   median       uq    max neval
-##  964.641 1062.802 1224.861 1264.966 1324.158 1831.8   100</code></pre>
+##      min       lq     mean   median       uq      max neval
+##  973.749 1240.659 1750.737 1342.816 1416.924 36066.82   100</code></pre>
 <pre class="r"><code># Import data using the read.delim function
 microbenchmark(
   read.delim(&quot;../../data/chd_genes.annotations.tsv&quot;,
@@ -523,8 +523,8 @@ microbenchmark(
 <pre><code>## Unit: microseconds
 ##                                                                                 expr
 ##  read.delim(&quot;../../data/chd_genes.annotations.tsv&quot;, sep = &quot;\\t&quot;,      header = TRUE)
-##      min       lq     mean   median       uq      max neval
-##  941.905 1005.927 1159.244 1179.348 1305.887 1719.393   100</code></pre>
+##      min       lq     mean   median       uq    max neval
+##  962.664 1044.523 1197.978 1223.055 1317.152 1793.3   100</code></pre>
 <pre class="r"><code># End of the section</code></pre>
 </div>
 </div>

@@ -11,9 +11,7 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-
 ## Install all requeried packages for this hands-on session
-
 
 ### 1. CRAN packages
 
@@ -92,5 +90,3 @@ BiocManager::install("EnhancedVolcano", force = TRUE, update = FALSE)
 library(EnhancedVolcano)
 
 ```
-
-
