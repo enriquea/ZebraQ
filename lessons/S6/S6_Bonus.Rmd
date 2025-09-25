@@ -1,0 +1,297 @@
+---
+title: "GSE106118 Hands-on: Basic R for Omics"
+author: "Enrique Audain Martinez"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup}
+# Packages
+library(tidyverse)
+library(matrixStats)
+library(pheatmap)
+library(RColorBrewer)
+
+# Paths (EDIT these)
+wdir <- getwd()
+expr_file <- paste0(wdir, "/GSE106118_HE10W.tsv.gz")  # or .csv
+out_dir   <- "outputs"
+if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
+```
+
+
+```{r prepare data}
+# Helper: read by extension
+read_expr <- function(path){
+  ext <- tolower(tools::file_ext(path))
+  if (ext == "csv") readr::read_csv(path, show_col_types = FALSE)
+  else readr::read_tsv(path, show_col_types = FALSE)
+}
+
+raw_df <- read_expr(expr_file)
+
+# If copy/paste or wrapping introduced whitespace/newlines in column names:
+fix_names <- function(x){
+  x <- gsub("\\s+", "", x)     # remove spaces/newlines/tabs
+  x <- gsub("\\.+", ".", x)    # squash repeated dots
+  x
+}
+
+names(raw_df) <- fix_names(names(raw_df))
+stopifnot("Gene" %in% names(raw_df))
+
+# Convert to matrix (rows=genes, cols=samples)
+expr_mat <- raw_df %>%
+  distinct(Gene, .keep_all = TRUE) %>%   # drop duplicated gene rows if any
+  column_to_rownames("Gene") %>%
+  as.matrix()
+
+mode(expr_mat) <- "numeric"
+dim(expr_mat); expr_mat[1:3, 1:6]
+
+```
+
+
+```{r extract metadata}
+sample_ids <- colnames(expr_mat)
+
+meta <- tibble(
+  sample   = sample_ids,
+  chamber  = sub("^([A-Z]{2}).*$", "\\1", sample_ids),   # LA, LV, RA, RV
+  replicate = readr::parse_number(sample_ids)
+)
+
+table(meta$chamber)
+
+```
+
+```{r basic qc}
+lib_sums <- colSums(expr_mat, na.rm = TRUE)
+qc <- tibble(sample = names(lib_sums), tpm_sum = lib_sums) %>%
+  left_join(meta, by = "sample")
+
+ggplot(qc, aes(chamber, tpm_sum)) +
+  geom_boxplot() + geom_jitter(width = 0.15, alpha = 0.6) +
+  labs(title = "TPM sum by chamber", y = "Sum(TPM) per sample")
+```
+```{r basic filtering}
+keep <- rowSums(expr_mat > 1) >= 2
+table(keep)
+
+expr_f <- expr_mat[keep, , drop = FALSE]
+dim(expr_mat); dim(expr_f)
+
+```
+```{r transform data}
+log1p_tpm <- log1p(expr_f)
+
+# simple ranking: top 10 by mean expression
+top_idx <- order(rowMeans(log1p_tpm), decreasing = TRUE)[1:10]
+top_genes <- rownames(log1p_tpm)[top_idx]
+tibble(Gene = top_genes, mean_log1p = rowMeans(log1p_tpm[top_genes, ]))
+
+```
+```{r plot top expressed genes}
+top_long <- as_tibble(log1p_tpm[top_genes, ], rownames = "Gene") %>%
+  pivot_longer(-Gene, names_to = "sample", values_to = "log1p_tpm") %>%
+  left_join(meta, by = "sample")
+
+ggplot(top_long, aes(reorder(Gene, -log1p_tpm), log1p_tpm, fill = chamber)) +
+  stat_summary(fun = mean, geom = "col", position = position_dodge()) +
+  coord_flip() +
+  labs(title = "Top genes (mean log1p TPM)", x = "Gene", y = "log1p(TPM)")
+
+```
+```{r chamber correlation}
+### Chamber-averaged expression → chamber–chamber correlation (tidyverse)
+
+library(tidyverse)
+library(pheatmap)
+
+# 1) Build a gene × chamber matrix of mean expression (using log1p TPM)
+#    - Average each gene across samples within a chamber
+gene_chamber_means <- as_tibble(log1p_tpm, rownames = "Gene") %>%
+  pivot_longer(-Gene, names_to = "sample", values_to = "log1p_tpm") %>%
+  left_join(meta %>% select(sample, chamber), by = "sample") %>%
+  group_by(Gene, chamber) %>%
+  summarise(mean_log1p = mean(log1p_tpm, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(names_from = chamber, values_from = mean_log1p)
+
+# 2) Convert to a numeric matrix with genes as rows, chambers as columns
+chamber_means_mat <- gene_chamber_means %>%
+  column_to_rownames("Gene") %>%
+  as.matrix()
+
+# 3) Correlate chambers across genes (4×4)
+#    - Pearson on log1p scale; change to method="spearman" if preferred
+avg_cor_mat <- cor(chamber_means_mat, use = "pairwise.complete.obs", method = "pearson")
+
+# 4) Plot the 4×4 chamber–chamber correlation heatmap
+pheatmap(avg_cor_mat,
+         display_numbers = TRUE,
+         number_format = "%.2f",
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         main = "Chamber–chamber correlation (from chamber-averaged expression)")
+
+
+```
+
+```{r constrast genes per chamber}
+
+# --- Identify chamber-biased genes -----------------
+grp_means <- as_tibble(log1p_tpm, rownames = "Gene") %>%
+  pivot_longer(-Gene, names_to = "sample", values_to = "log1p_tpm") %>%
+  left_join(meta, by = "sample") %>%
+  group_by(Gene, chamber) %>%
+  summarise(mean_log1p = mean(log1p_tpm), .groups = "drop") %>%
+  pivot_wider(names_from = chamber, values_from = mean_log1p)
+
+# Example contrasts:
+# LA vs RA (atria)
+atrial <- grp_means %>%
+  mutate(delta_LA_RA = LA - RA,
+         abs_delta = abs(delta_LA_RA)) %>%
+  arrange(desc(abs_delta))
+
+head(atrial %>% select(Gene, LA, RA, delta_LA_RA), 12)
+
+# LV vs RV (ventricles)
+ventricular <- grp_means %>%
+  mutate(delta_LV_RV = LV - RV,
+         abs_delta = abs(delta_LV_RV)) %>%
+  arrange(desc(abs_delta))
+
+head(ventricular %>% select(Gene, LV, RV, delta_LV_RV), 12)
+
+```
+```{r plot chamber biased genes}
+
+# --- Plot top chamber-biased genes -----------------
+plot_bias <- function(tbl, grpA, grpB, delta_col, title){
+  top_bias <- bind_rows(
+    tbl %>% slice_max(.data[[delta_col]], n = 10) %>% mutate(direction = paste0(grpA," > ",grpB)),
+    tbl %>% slice_min(.data[[delta_col]], n = 10) %>% mutate(direction = paste0(grpB," > ",grpA))
+  )
+  top_long <- top_bias %>%
+    select(Gene, all_of(c(grpA, grpB)), direction) %>%
+    pivot_longer(cols = all_of(c(grpA, grpB)), names_to = "chamber", values_to = "mean_log1p")
+  ggplot(top_long, aes(reorder(Gene, mean_log1p), mean_log1p, fill = chamber)) +
+    geom_col(position = "dodge") + coord_flip() +
+    facet_wrap(~direction, scales = "free_y") +
+    labs(title = title, x = "Gene", y = "Mean log1p(TPM)")
+}
+
+plot_bias(atrial, "LA", "RA", "delta_LA_RA", "Top chamber-biased genes: LA vs RA")
+plot_bias(ventricular, "LV", "RV", "delta_LV_RV", "Top chamber-biased genes: LV vs RV")
+
+```
+
+```{r single gene expression profiling}
+### Expression of a single gene across chambers (example: NOTCH1)
+library(tidyverse)
+
+gene_to_plot <- "NOTCH1"
+
+# Extract gene values from log1p TPM matrix
+gene_vals <- as_tibble(t(log1p_tpm[gene_to_plot, , drop = FALSE]), 
+                       rownames = "sample") %>%
+  rename(value = !!gene_to_plot) %>%
+  left_join(meta, by = "sample")
+
+# 1) Violin + jitter + boxplot overlay
+ggplot(gene_vals, aes(x = chamber, y = value, fill = chamber)) +
+  geom_violin(trim = TRUE, alpha = 0.4) +
+  geom_boxplot(width = 0.15, outlier.shape = NA, alpha = 0.7) +
+  geom_jitter(width = 0.1, alpha = 0.6, size = 1.5) +
+  labs(title = paste(gene_to_plot, "expression by chamber"),
+       x = "Chamber", y = "log1p(TPM)") +
+  theme_minimal()
+
+# 2) Plain boxplot + jitter
+ggplot(gene_vals, aes(x = chamber, y = value, fill = chamber)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.7) +
+  geom_jitter(width = 0.15, alpha = 0.6, size = 1.5) +
+  labs(title = paste(gene_to_plot, "expression by chamber (boxplot)"),
+       x = "Chamber", y = "log1p(TPM)") +
+  theme_minimal()
+
+
+
+```
+
+```{r partwise comparisons at gene level}
+### Pairwise comparisons of NOTCH1 expression across chambers
+
+library(tidyverse)
+
+gene_to_test <- "CHD7"
+
+# Extract gene values (log1p TPM) + chamber labels
+gene_vals <- as_tibble(t(log1p_tpm[gene_to_test, , drop = FALSE]), 
+                       rownames = "sample") %>%
+  rename(value = !!gene_to_test) %>%
+  left_join(meta, by = "sample") %>%
+  filter(!is.na(chamber))
+
+# Pairwise Wilcoxon rank-sum test with BH adjustment
+pw <- pairwise.wilcox.test(gene_vals$value,
+                           gene_vals$chamber,
+                           p.adjust.method = "BH",
+                           exact = FALSE)
+
+# Tidy output: group1, group2, p_adj
+pw_df <- as_tibble(pw$p.value, rownames = "group1") %>%
+  pivot_longer(-group1, names_to = "group2", values_to = "p_adj") %>%
+  drop_na() %>%
+  mutate(gene = gene_to_test) %>%
+  arrange(p_adj)
+
+pw_df
+
+
+```
+
+```{r getting top expressed genes}
+# Install if needed
+if (!requireNamespace("openxlsx", quietly = TRUE)) install.packages("openxlsx")
+library(openxlsx)
+
+#--- 1) Calculate average expression per chamber -----------------
+chamber_means <- as_tibble(log1p_tpm, rownames = "Gene") %>%
+  pivot_longer(-Gene, names_to = "sample", values_to = "log1p_tpm") %>%
+  left_join(meta, by = "sample") %>%
+  group_by(Gene, chamber) %>%
+  summarise(mean_expr = mean(log1p_tpm), .groups = "drop")
+
+#--- 2) Select top N unique genes per chamber --------------------
+topN <- 50   # <-- adjust as needed
+
+top_per_chamber <- chamber_means %>%
+  group_by(chamber) %>%
+  arrange(desc(mean_expr), .by_group = TRUE) %>%
+  slice_head(n = topN) %>%
+  ungroup()
+
+# Peek
+table(top_per_chamber$chamber)
+
+#--- 3) Split by chamber and write to Excel ----------------------
+wb <- createWorkbook()
+
+for (ch in unique(top_per_chamber$chamber)) {
+  df <- top_per_chamber %>% filter(chamber == ch) %>% select(Gene, mean_expr)
+  addWorksheet(wb, sheetName = ch)
+  writeData(wb, sheet = ch, df)
+}
+
+saveWorkbook(wb, file = file.path(out_dir, "TopGenes_perChamber.xlsx"), overwrite = TRUE)
+
+```
+
+```{r GO enrichment, eval=FALSE}
+# Perform GO enrichment analysis on top chamber genes 
+# https://maayanlab.cloud/Enrichr/
+
+```
+
