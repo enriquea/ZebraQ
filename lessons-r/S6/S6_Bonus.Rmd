@@ -12,9 +12,8 @@ library(matrixStats)
 library(pheatmap)
 library(RColorBrewer)
 
-# Paths (EDIT these)
-wdir <- getwd()
-expr_file <- paste0(wdir, "/GSE106118_HE10W.tsv.gz")  # or .csv
+# Paths (relative to this .Rmd, as in S2-S4)
+expr_file <- "../../data/GSE106118_HE10W.tsv.gz"  # or .csv
 out_dir   <- "outputs"
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 ```
@@ -74,6 +73,9 @@ ggplot(qc, aes(chamber, tpm_sum)) +
   geom_boxplot() + geom_jitter(width = 0.15, alpha = 0.6) +
   labs(title = "TPM sum by chamber", y = "Sum(TPM) per sample")
 ```
+
+
+
 ```{r basic filtering}
 keep <- rowSums(expr_mat > 1) >= 2
 table(keep)
@@ -82,6 +84,9 @@ expr_f <- expr_mat[keep, , drop = FALSE]
 dim(expr_mat); dim(expr_f)
 
 ```
+
+
+
 ```{r transform data}
 log1p_tpm <- log1p(expr_f)
 
@@ -102,6 +107,9 @@ ggplot(top_long, aes(reorder(Gene, -log1p_tpm), log1p_tpm, fill = chamber)) +
   labs(title = "Top genes (mean log1p TPM)", x = "Gene", y = "log1p(TPM)")
 
 ```
+
+
+
 ```{r chamber correlation}
 ### Chamber-averaged expression → chamber–chamber correlation (tidyverse)
 
@@ -220,12 +228,12 @@ ggplot(gene_vals, aes(x = chamber, y = value, fill = chamber)) +
 
 ```
 
-```{r partwise comparisons at gene level}
+```{r pairwise comparisons at gene level}
 ### Pairwise comparisons of NOTCH1 expression across chambers
 
 library(tidyverse)
 
-gene_to_test <- "CHD7"
+gene_to_test <- "NOTCH1"
 
 # Extract gene values (log1p TPM) + chamber labels
 gene_vals <- as_tibble(t(log1p_tpm[gene_to_test, , drop = FALSE]), 

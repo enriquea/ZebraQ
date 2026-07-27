@@ -1,0 +1,45 @@
+# ZebraQ - Python track (conda / mamba)
+#
+#   conda env create -f setup/python/environment.yml
+#   conda activate zebraq-py
+#
+# If conda is slow, mamba is a drop-in replacement:
+#   mamba env create -f setup/python/environment.yml
+
+name: zebraq-py
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.11
+
+  # core data handling
+  - pandas=2.3.3
+  - numpy=2.4.6
+
+  # plotting
+  - matplotlib=3.11.1
+  - seaborn=0.13.2
+
+  # statistics
+  - scipy=1.17.1
+  - statsmodels=0.14.6
+  - scikit-learn=1.9.0
+
+  # file formats
+  - openpyxl=3.1.5
+  - pyarrow=25.0.0
+
+  # notebook environment
+  - jupyterlab=4.6.2
+  - notebook=7.6.1
+  - ipykernel=7.3.0
+
+  # Not on conda-forge, so installed with pip inside the conda environment.
+  - pip
+  - pip:
+      - pydeseq2==0.5.4
+      - anndata==0.12.19
+      - adjustText==1.4.0
+      - session-info==1.0.1
