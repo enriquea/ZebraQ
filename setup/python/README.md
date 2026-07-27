@@ -33,7 +33,8 @@ open S5 without having opened S4.
 
 ## Option 2 — A virtual environment (recommended for local work)
 
-You need Python 3.10 or newer. Check with `python3 --version`.
+You need **Python 3.11 or newer** — `pydeseq2` 0.5.x requires it. Check with
+`python3 --version`.
 
 ```bash
 git clone https://github.com/enriquea/ZebraQ.git
@@ -99,9 +100,18 @@ kernel and select it in Jupyter:
 python -m ipykernel install --user --name zebraq-py --display-name "ZebraQ (Python)"
 ```
 
-**PyDESeq2 fails to install.**
-It needs Python 3.10 or newer. On older versions pip will either fail outright or
-silently install an ancient release whose API does not match these lessons.
+**PyDESeq2 fails to install** with `No matching distribution found for
+pydeseq2==0.5.4`.
+You are on Python 3.10 or older. PyDESeq2 0.5.x requires Python 3.11+, and because
+`requirements.txt` pins the exact version, pip has no older candidate to fall back
+to — it fails outright rather than silently installing something incompatible.
+Create the environment with a newer interpreter:
+
+```bash
+python3.11 -m venv .venv          # or any 3.11+ you have installed
+```
+
+The conda option already pins `python=3.11`, so it is unaffected.
 
 **A notebook cannot find the data files.**
 Run Jupyter from the repository root, and open notebooks from `lessons-py/`. The
