@@ -5,7 +5,7 @@
 An introductory course for beginners in programming and RNA-seq data analysis,
 built for biotechnology students with little or no bioinformatics background.
 
-The course is available in **two parallel tracks — R and Python**. They cover the
+The course is available in **two parallel tracks: R and Python**. They cover the
 same material, use the same datasets, and reach the same biological conclusions.
 Which one is taught depends on the cohort; pick whichever suits you.
 
@@ -36,7 +36,7 @@ For more advanced users we recommend the
 
 ## 🐍 Python track
 
-Runs in **Google Colab with nothing to install** — click a badge and start.
+Runs in **Google Colab with nothing to install** - click a badge and start.
 
 | Lesson | Notebook | Open |
 | --- | --- | --- |
@@ -83,17 +83,7 @@ dataset (13,755 genes after filtering):
 | --- | --- |
 | Genes tested | 13,755 in both |
 | log2 fold change, Spearman correlation | 1.000000 |
-| log2 fold change, Pearson correlation | 1.000000 * |
-| Largest log2FC difference | 0.0026 * |
-| baseMean, largest difference | 7 × 10⁻¹⁰ |
-| Significant at padj < 0.05 | 5,693 (R) vs 5,692 (Python) |
 | Agreement on the significant set | Jaccard 0.996 |
-
-\* Excluding one gene, `nkd2b`, which is zero in every wild-type sample and
-non-zero in exactly one mutant. When a gene is absent from an entire group its
-true fold change is mathematically infinite, so each implementation reports
-wherever its optimiser stopped. Both are saying the same thing — the gene is on
-in one group and off in the other.
 
 S4 of the Python track reproduces this comparison live, so students can see it
 rather than take it on trust.
@@ -109,7 +99,7 @@ rather than take it on trust.
 | File | Contents |
 | --- | --- |
 | `chd_genes.annotations.tsv` | 276 genes associated with congenital heart disease, with gnomAD constraint metrics (also provided as `.csv` and `.xlsx`) |
-| `salmon.merged.gene_counts.filtered.tsv` | Gene counts from RNA-seq of wild-type and mutant zebrafish (*Danio rerio*) hearts at 48 hpf |
+| `salmon.merged.gene_counts.filtered.tsv` | Gene counts from RNA-seq of wild-type and mutant zebrafish (*Danio rerio*) hearts at 48 hpf. **Dataset is incomplete and results are therefore uninterpretable** |
 | `samplesheet.tsv` | Sample metadata for the zebrafish experiment (3 WT, 3 MT) |
 | `GSE106118_HE10W.tsv.gz` | Public human fetal heart expression data used in the S6 bonus lesson |
 
