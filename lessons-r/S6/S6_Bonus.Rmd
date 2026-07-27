@@ -12,9 +12,8 @@ library(matrixStats)
 library(pheatmap)
 library(RColorBrewer)
 
-# Paths (EDIT these)
-wdir <- getwd()
-expr_file <- paste0(wdir, "/GSE106118_HE10W.tsv.gz")  # or .csv
+# Paths (relative to this .Rmd, as in S2-S4)
+expr_file <- "../../data/GSE106118_HE10W.tsv.gz"  # or .csv
 out_dir   <- "outputs"
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 ```
