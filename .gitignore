@@ -25,4 +25,12 @@ outputs/
 README.html
 **/S2/iris.csv
 **/S2/iris.txt
+results/py/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
 

@@ -1,0 +1,35 @@
+# ZebraQ - Python track
+#
+# Versions pinned to what the lessons were built and tested against.
+# Install with:   pip install -r setup/python/requirements.txt
+#
+# You do NOT need this file if you run the lessons in Google Colab -
+# each notebook installs what it needs in its first cell.
+
+# --- core data handling -------------------------------------------------
+pandas==2.3.3
+numpy==2.4.6
+
+# --- plotting -----------------------------------------------------------
+matplotlib==3.11.1
+seaborn==0.13.2
+adjustText==1.4.0          # non-overlapping labels on the volcano plot
+
+# --- statistics ---------------------------------------------------------
+scipy==1.17.1
+statsmodels==0.14.6        # Benjamini-Hochberg correction (S6)
+scikit-learn==1.9.0        # PCA (S5), the iris dataset (S1)
+
+# --- RNA-seq ------------------------------------------------------------
+pydeseq2==0.5.4            # the Python re-implementation of DESeq2
+anndata==0.12.19           # data container used internally by pydeseq2
+
+# --- file formats -------------------------------------------------------
+openpyxl==3.1.5            # .xlsx read/write
+pyarrow==25.0.0            # Parquet (S2)
+
+# --- notebook environment ----------------------------------------------
+jupyterlab==4.6.2
+notebook==7.6.1
+ipykernel==7.3.0
+session-info==1.0.1        # the equivalent of R's sessionInfo()
