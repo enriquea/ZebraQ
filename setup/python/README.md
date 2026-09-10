@@ -54,7 +54,7 @@ To leave the environment later, run `deactivate`.
 
 ---
 
-## Option 3 — conda
+## Option 3 — conda (most reliable for a local install)
 
 ```bash
 git clone https://github.com/enriquea/ZebraQ.git
@@ -63,8 +63,21 @@ cd ZebraQ
 conda env create -f setup/python/environment.yml
 conda activate zebraq-py
 
+# Register this environment as a named Jupyter kernel, so you can tell it
+# apart from any other Python you have. See the kernel note below.
+python -m ipykernel install --user --name zebraq-py --display-name "ZebraQ (Python)"
+
 jupyter lab
 ```
+
+Prefer this over Option 2 if you have conda available. Every package, `pydeseq2`
+included, comes from a conda channel as a prebuilt binary, so nothing is
+compiled on your machine. That matters most on Apple Silicon and on Windows,
+where a pip package with no matching wheel falls back to building from source
+and needs a compiler you probably do not have.
+
+The environment pins exact versions and is tested on macOS (Intel and Apple
+Silicon), Windows and Linux.
 
 ---
 

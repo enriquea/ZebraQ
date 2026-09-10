@@ -5,6 +5,12 @@
 #
 # You do NOT need this file if you run the lessons in Google Colab -
 # each notebook installs what it needs in its first cell.
+#
+# Prefer setup/python/environment.yml if you have conda: everything there,
+# pydeseq2 included, arrives as a prebuilt binary, whereas pip builds from
+# source whenever there is no wheel for your platform. The one deliberate
+# difference is session-info, pinned to 1.0.1 here and 1.0.0 on conda-forge,
+# which is the newest version that channel carries.
 
 # --- core data handling -------------------------------------------------
 pandas==2.3.3
