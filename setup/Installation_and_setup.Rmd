@@ -1,92 +1,94 @@
 ---
-title: "Installation and setup"
+title: "Installation and setup — R track"
 author: "Enrique Audain Martinez"
 date: "`r Sys.Date()`"
-output: 
+output:
    html_document: default
    pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ```
 
-## Install all requeried packages for this hands-on session
+## What this course is pinned to
 
-### 1. CRAN packages
+| | |
+|---|---|
+| R | **4.6.x** |
+| Bioconductor | **3.23** |
+| CRAN snapshot | **2026-09-01** |
 
-```{r Install CRAM packages, echo=TRUE, message=FALSE, warning=FALSE}
+Bioconductor 3.23 requires R 4.6, so these move together or not at all.
 
-# Install CRAN packages
+Install R 4.6.x from [cran.r-project.org](https://cran.r-project.org) and RStudio
+Desktop from [posit.co](https://posit.co/download/rstudio-desktop/). If you already
+have an older R, install 4.6 alongside it and pick it in RStudio under
+**Tools → Global Options → General → R version**.
 
-# ggplot2
-if(!require(ggplot2)){
-  install.packages("ggplot2", repos = "https://cloud.r-project.org")
-  library(ggplot2)
-}
+## Install everything
 
-# ggpubr
-if(!require(ggpubr)){
-  install.packages("ggpubr", repos = "https://cloud.r-project.org")
-  library(ggpubr)
-}
+Open `ZebraQ.Rproj` in RStudio, then run this once:
 
-# dplyr
-if(!require(dplyr)){
-  install.packages("dplyr", repos = "https://cloud.r-project.org")
-  library(dplyr)
-}
-
-# RColorBrewer
-if(!require(RColorBrewer)){
-  install.packages("RColorBrewer", repos = "https://cloud.r-project.org")
-  library(RColorBrewer)
-}
-
-# readxl
-if(!require(readxl)){
-  install.packages("readxl", repos = "https://cloud.r-project.org")
-  library(readxl)
-}
-
-# openxlsx
-if(!require(openxlsx)){
-  install.packages("openxlsx", repos = "https://cloud.r-project.org")
-  library(openxlsx)
-}
-
-# devtools
-if(!require(devtools)){
-  install.packages("devtools", repos = "https://cloud.r-project.org")
-  library(devtools)
-}
-
-
-
-# microbenchmark
-if(!require(microbenchmark)){
-  install.packages("microbenchmark", repos = "https://cloud.r-project.org")
-  library(microbenchmark)
-}
-
+```{r install}
+source("setup/install_r.R")
 ```
 
-### 2. Bioconductor packages
+That is the whole setup. The script checks your R version, installs the nine CRAN
+packages and two Bioconductor packages the lessons use, and prints the version of
+each so you can see that it worked.
 
-```{r Install Bioconductor packages, echo=TRUE, message=FALSE, warning=FALSE}
+## Why a script instead of `install.packages()`
 
-# Install Bioconductor packages
+Two problems come up on people's own laptops, and the script exists to avoid both.
 
-# DeSeq2
-if (!require("BiocManager", quietly = FALSE))
-    install.packages("BiocManager")
-BiocManager::install("DESeq2", force = TRUE, update = FALSE)
-library(DESeq2)
+**Everyone ends up with different versions.** A plain `install.packages("ggplot2")`
+gives you whatever CRAN published today. Over a semester the course drifts apart
+from itself, and a plot that works on one laptop looks different on another. The
+script installs from a *dated snapshot* of CRAN, so everybody gets the same
+versions no matter when they run it.
 
-# EnhancedVolcano
-if (!require("BiocManager", quietly = FALSE))
-    install.packages("BiocManager")
-BiocManager::install("EnhancedVolcano", force = TRUE, update = FALSE)
-library(EnhancedVolcano)
+**R offers to compile from source, and compiling fails.** On macOS and Windows the
+default `pkgType` is `"both"`, which means R asks
 
+> Do you want to install from sources the package which needs compilation?
+
+whenever the source version is newer than the available binary. Saying yes needs a
+compiler toolchain — Rtools on Windows, the Xcode command line tools on macOS —
+which most people do not have, and the install dies partway through. The script
+sets `pkgType = "binary"` so the question never comes up.
+
+The packages come from [Posit Package Manager](https://packagemanager.posit.co),
+which serves prebuilt binaries for Windows, macOS (both Intel and Apple Silicon)
+and Linux. Plain CRAN has no Linux binaries at all, so a Linux install without this
+would compile every package from source.
+
+## If something goes wrong
+
+**"This course is pinned to R 4.6 … you are running R 4.x"** — the script stopped
+on purpose. Install R 4.6.x and select it in RStudio as described above.
+
+**A package still fails.** Run the script again; it only installs what is missing,
+so it is safe to repeat. If the same package fails twice, send the last 20 lines of
+output rather than a screenshot of the red text.
+
+**You want to know exactly what you have.** `sessionInfo()` prints your R version
+and every loaded package — the R equivalent of the `session_info.show()` you will
+see at the end of each Python notebook.
+
+## Packages this installs
+
+From CRAN: `ggplot2`, `ggpubr`, `dplyr`, `RColorBrewer`, `readxl`, `openxlsx`,
+`pheatmap`, `matrixStats`, `microbenchmark`.
+
+From Bioconductor: `DESeq2`, `EnhancedVolcano`.
+
+```{r verify}
+# Check what you ended up with at any point:
+for (p in c("ggplot2", "ggpubr", "dplyr", "RColorBrewer", "readxl", "openxlsx",
+            "pheatmap", "matrixStats", "microbenchmark",
+            "DESeq2", "EnhancedVolcano")) {
+  cat(sprintf("%-18s %s\n", p, tryCatch(as.character(packageVersion(p)),
+                                        error = function(e) "not installed")))
+}
 ```
