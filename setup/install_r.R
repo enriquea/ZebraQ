@@ -23,12 +23,17 @@
 #      "binary" removes the question entirely.
 
 ## ---------------------------------------------------------------- pinned ---
-## Bioconductor 3.23 requires R 4.6.x. Change these three together, never one
-## on its own, and re-knit the lessons afterwards.
-R_SERIES <- "4.6"
-BIOC_VERSION <- "3.23"
-CRAN_SNAPSHOT <- "2026-09-01"
+## The course is built and tested on R 4.6 with Bioconductor 3.23. If you are on
+## an older R the script still works, but it has to use the Bioconductor release
+## that matches your R - that pairing is fixed by Bioconductor, not by us - so
+## you will get older analysis packages. It will tell you when that happens.
+PREFERRED_R <- "4.6"
 
+## R series -> newest stable Bioconductor release for it.
+BIOC_FOR_R <- c("4.1" = "3.14", "4.2" = "3.16", "4.3" = "3.18",
+                "4.4" = "3.20", "4.5" = "3.22", "4.6" = "3.23")
+
+CRAN_SNAPSHOT <- "2026-09-01"
 CRAN_BASE <- "https://packagemanager.posit.co/cran"
 
 CRAN_PKGS <- c(
@@ -39,15 +44,30 @@ BIOC_PKGS <- c("DESeq2", "EnhancedVolcano")
 
 ## ------------------------------------------------------------ R version ---
 current <- paste(R.version$major, strsplit(R.version$minor, ".", fixed = TRUE)[[1]][1], sep = ".")
-if (current != R_SERIES) {
+
+if (!current %in% names(BIOC_FOR_R)) {
   message(sprintf(paste0(
-    "\n  This course is pinned to R %s (Bioconductor %s).\n",
-    "  You are running R %s.\n\n",
-    "  Bioconductor %s will not install on R %s, so please install R %s.x from\n",
-    "    https://cran.r-project.org\n",
+    "\n  You are running R %s, which this course cannot install for.\n",
+    "  Supported: R %s. Please install R %s.x from https://cran.r-project.org\n",
     "  and select it in RStudio under Tools > Global Options > General.\n"),
-    R_SERIES, BIOC_VERSION, current, BIOC_VERSION, current, R_SERIES))
-  stop("wrong R version", call. = FALSE)
+    current, paste(names(BIOC_FOR_R), collapse = ", "), PREFERRED_R))
+  stop("unsupported R version", call. = FALSE)
+}
+
+BIOC_VERSION <- unname(BIOC_FOR_R[current])
+
+if (current != PREFERRED_R) {
+  message(sprintf(paste0(
+    "\n  ----------------------------------------------------------------\n",
+    "  You are on R %s, so you will get Bioconductor %s.\n",
+    "  The lessons were written against R %s / Bioconductor %s.\n\n",
+    "  Everything will install and run, but some results and plots may\n",
+    "  differ from the committed outputs - DESeq2 in particular moves a\n",
+    "  long way between these releases. If you can install R %s, do.\n",
+    "  Both versions can sit side by side; you switch in RStudio under\n",
+    "  Tools > Global Options > General.\n",
+    "  ----------------------------------------------------------------\n"),
+    current, BIOC_VERSION, PREFERRED_R, unname(BIOC_FOR_R[PREFERRED_R]), PREFERRED_R))
 }
 
 ## ------------------------------------------------------------- repository ---
@@ -79,6 +99,19 @@ if (os == "linux") {
 message(sprintf("  R %s | Bioconductor %s | CRAN snapshot %s",
                 current, BIOC_VERSION, CRAN_SNAPSHOT))
 message(sprintf("  repository: %s\n", getOption("repos")[["CRAN"]]))
+
+## Not every R version has prebuilt binaries for every platform - CRAN retires
+## old ones. If this R/platform combination has none, say so up front rather
+## than letting the student discover it when a compile fails halfway through.
+n_binary <- tryCatch(nrow(available.packages()), error = function(e) 0L)
+if (is.null(n_binary) || n_binary < 1000) {
+  message(sprintf(paste0(
+    "\n  Warning: only %s packages are available for R %s on this platform.\n",
+    "  There is probably no prebuilt binary set for this combination, so\n",
+    "  packages will be built from source and may need a compiler. Moving to\n",
+    "  R %s would avoid this.\n"),
+    format(n_binary, big.mark = ","), current, PREFERRED_R))
+}
 
 ## ---------------------------------------------------------------- install ---
 install_missing <- function(pkgs, installer) {
