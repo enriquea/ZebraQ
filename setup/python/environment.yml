@@ -8,9 +8,14 @@
 #   mamba env create -f setup/python/environment.yml
 #
 # Everything here comes from conda channels as a prebuilt package, including
-# pydeseq2. Nothing is installed with pip: a pip package with no wheel for your
-# platform gets built from source, which needs a compiler and is the step most
-# likely to fail on a student laptop.
+# pydeseq2, so nothing has to be built from source. A pip package with no wheel
+# for your platform gets compiled locally, which needs a toolchain and is the
+# step most likely to fail on a student laptop.
+#
+# One exception, deliberately left out: the optional enrichment section at the
+# end of S6 uses gseapy, which has no current Windows build on conda (bioconda
+# stops at 0.9.x for win-64). That lesson installs it with pip at the point of
+# use, and it needs internet access either way.
 
 name: zebraq-py
 

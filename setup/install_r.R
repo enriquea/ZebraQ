@@ -9,7 +9,8 @@
 #
 # Run it either way:
 #     Rscript setup/install_r.R
-#     source("setup/install_r.R")        # from inside RStudio
+#     source("setup/install_r.R")        # from inside RStudio, with the
+#                                        # ZebraQ.Rproj project open
 #
 # Why not plain install.packages()? Two reasons, both of which cause the
 # failures people hit on their own machines:
@@ -36,8 +37,10 @@ BIOC_FOR_R <- c("4.1" = "3.14", "4.2" = "3.16", "4.3" = "3.18",
 CRAN_SNAPSHOT <- "2026-09-01"
 CRAN_BASE <- "https://packagemanager.posit.co/cran"
 
+## tidyverse is required by lessons-r/S6 (which also uses readr::, pulled in by
+## tidyverse). Keep this list in step with the library() calls in lessons-r/.
 CRAN_PKGS <- c(
-  "ggplot2", "ggpubr", "dplyr", "RColorBrewer",
+  "tidyverse", "ggplot2", "ggpubr", "dplyr", "RColorBrewer",
   "readxl", "openxlsx", "pheatmap", "matrixStats", "microbenchmark"
 )
 BIOC_PKGS <- c("DESeq2", "EnhancedVolcano")
@@ -74,26 +77,56 @@ if (current != PREFERRED_R) {
 ## Posit Package Manager serves prebuilt binaries for Windows and macOS (Intel
 ## and Apple Silicon), and - unlike CRAN - for Linux too. Pointing at a dated
 ## snapshot rather than "latest" is what makes the install reproducible.
+##
+## On Linux, P3M decides whether to hand back a binary or a source tarball by
+## reading the User-Agent. R's own default is discarded by its libcurl code
+## (anything starting with "R (" is dropped), so without the line below every
+## Linux install silently falls back to compiling from source - exactly what
+## this script exists to avoid. This is Posit's documented workaround.
+options(HTTPUserAgent = sprintf(
+  "R/%s R (%s)", getRversion(),
+  paste(getRversion(), R.version["platform"], R.version["arch"], R.version["os"])
+))
+
+snapshot_repo <- file.path(CRAN_BASE, CRAN_SNAPSHOT)
 os <- tolower(Sys.info()[["sysname"]])
 
+## How many packages does the current repo setting actually offer? Used to tell
+## a working configuration from one that resolves to an empty index.
+n_available <- function() {
+  suppressWarnings(tryCatch(nrow(available.packages()), error = function(e) 0L))
+}
+
 if (os == "linux") {
-  # On Linux, P3M serves binaries from a distribution-specific path and R
-  # installs them through the "source" code path, so pkgType stays "source".
+  # /etc/os-release permits the value to be quoted, and sub() alone would leave
+  # the quotes in the URL.
   codename <- tryCatch({
     rel <- readLines("/etc/os-release", warn = FALSE)
-    sub('^VERSION_CODENAME=', "", grep("^VERSION_CODENAME=", rel, value = TRUE)[1])
+    hit <- grep("^VERSION_CODENAME=", rel, value = TRUE)[1]
+    if (is.na(hit)) NA_character_ else gsub('^"|"$|^\'|\'$', "", sub("^VERSION_CODENAME=", "", hit))
   }, error = function(e) NA_character_)
 
-  if (is.na(codename) || !nzchar(codename)) {
-    message("  Could not detect the Linux release; falling back to source packages.")
-    repo <- file.path(CRAN_BASE, CRAN_SNAPSHOT)
+  # P3M only builds for the distributions it supports. Rather than trust the
+  # codename, set the URL and check that it returns a populated index; fall
+  # back to the plain snapshot (source packages) if it does not.
+  if (!is.na(codename) && nzchar(codename)) {
+    options(repos = c(CRAN = file.path(CRAN_BASE, "__linux__", codename, CRAN_SNAPSHOT)),
+            pkgType = "source")
+    if (n_available() < 1000) {
+      message(sprintf(paste0(
+        "  Posit Package Manager has no binary build for '%s'.\n",
+        "  Falling back to source packages - installing will take longer and\n",
+        "  needs a compiler (build-essential / gcc-c++ and gfortran).\n"), codename))
+      options(repos = c(CRAN = snapshot_repo))
+    } else {
+      message(sprintf("  Linux detected (%s): using prebuilt binaries.", codename))
+    }
   } else {
-    repo <- file.path(CRAN_BASE, "__linux__", codename, CRAN_SNAPSHOT)
-    message(sprintf("  Linux detected (%s): using prebuilt binaries.", codename))
+    message("  Could not detect the Linux release; falling back to source packages.")
+    options(repos = c(CRAN = snapshot_repo), pkgType = "source")
   }
-  options(repos = c(CRAN = repo), pkgType = "source")
 } else {
-  options(repos = c(CRAN = file.path(CRAN_BASE, CRAN_SNAPSHOT)), pkgType = "binary")
+  options(repos = c(CRAN = snapshot_repo), pkgType = "binary")
 }
 
 message(sprintf("  R %s | Bioconductor %s | CRAN snapshot %s",
@@ -101,35 +134,87 @@ message(sprintf("  R %s | Bioconductor %s | CRAN snapshot %s",
 message(sprintf("  repository: %s\n", getOption("repos")[["CRAN"]]))
 
 ## Not every R version has prebuilt binaries for every platform - CRAN retires
-## old ones. If this R/platform combination has none, say so up front rather
-## than letting the student discover it when a compile fails halfway through.
-n_binary <- tryCatch(nrow(available.packages()), error = function(e) 0L)
-if (is.null(n_binary) || n_binary < 1000) {
+## old ones. Warn up front rather than letting the student discover it when a
+## compile fails halfway through.
+avail <- suppressWarnings(tryCatch(available.packages(), error = function(e) NULL))
+if (is.null(avail) || nrow(avail) < 1000) {
   message(sprintf(paste0(
     "\n  Warning: only %s packages are available for R %s on this platform.\n",
-    "  There is probably no prebuilt binary set for this combination, so\n",
-    "  packages will be built from source and may need a compiler. Moving to\n",
+    "  Packages may be built from source and need a compiler. Moving to\n",
     "  R %s would avoid this.\n"),
-    format(n_binary, big.mark = ","), current, PREFERRED_R))
+    format(if (is.null(avail)) 0L else nrow(avail), big.mark = ","), current, PREFERRED_R))
 }
 
 ## ---------------------------------------------------------------- install ---
-install_missing <- function(pkgs, installer) {
-  missing <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
-  if (!length(missing)) {
-    message("  already present: ", paste(pkgs, collapse = ", "))
-    return(invisible(NULL))
-  }
-  message("  installing: ", paste(missing, collapse = ", "))
-  installer(missing)
+## Install a package if it is absent OR if the installed version differs from
+## the one the snapshot pins. Checking only for presence - which is the obvious
+## thing to write - would leave anyone with a pre-existing library on their old
+## versions, i.e. exactly the students the pinning is meant to help.
+installed_version <- function(p) {
+  path <- suppressWarnings(system.file(package = p))
+  if (!nzchar(path)) return(NA_character_)
+  tryCatch(as.character(packageVersion(p)), error = function(e) NA_character_)
 }
 
-install_missing(c("BiocManager", CRAN_PKGS),
-                function(p) install.packages(p, quiet = TRUE))
+target_version <- function(p) {
+  if (is.null(avail) || !p %in% rownames(avail)) return(NA_character_)
+  unname(avail[p, "Version"])
+}
 
-BiocManager::install(version = BIOC_VERSION, ask = FALSE, update = FALSE)
-install_missing(BIOC_PKGS,
-                function(p) BiocManager::install(p, ask = FALSE, update = FALSE))
+same_version <- function(a, b) {
+  # "1.1-3" and "1.1.3" are the same version; compare parsed, not as strings.
+  isTRUE(tryCatch(package_version(a) == package_version(b), error = function(e) FALSE))
+}
+
+needs_install <- function(pkgs) {
+  out <- character(0)
+  absent <- character(0)
+  for (p in pkgs) {
+    have <- installed_version(p)
+    want <- target_version(p)
+    if (is.na(want)) absent <- c(absent, p)
+    if (is.na(have)) {
+      out <- c(out, p)
+    } else if (!is.na(want) && !same_version(have, want)) {
+      message(sprintf("    %s: have %s, snapshot pins %s - updating", p, have, want))
+      out <- c(out, p)
+    }
+  }
+  # Older R series do not have a complete binary set: CRAN stops building for
+  # them as new versions arrive. Name the gaps instead of letting the install
+  # fail with "package is not available".
+  if (length(absent)) {
+    message(sprintf(paste0(
+      "\n    Note: %s not available for R %s on this platform (%s).\n",
+      "    R %s has the full set.\n"),
+      paste(absent, collapse = ", "), current, .Platform$pkgType, PREFERRED_R))
+  }
+  out
+}
+
+message("  CRAN packages")
+todo <- needs_install(c("BiocManager", CRAN_PKGS))
+if (length(todo)) {
+  message("    installing: ", paste(todo, collapse = ", "))
+  install.packages(todo, quiet = TRUE)
+} else {
+  message("    all present at the pinned versions")
+}
+
+## Bioconductor is pinned to a release, not to a date: BiocManager resolves
+## against the live 3.x repository, which receives patch updates through the
+## release cycle. Two people installing months apart can therefore differ in
+## DESeq2's patch version even though every CRAN package matches. There is no
+## dated Bioconductor snapshot on Posit Package Manager to point at.
+message("  Bioconductor packages")
+suppressMessages(BiocManager::install(version = BIOC_VERSION, ask = FALSE, update = FALSE))
+bioc_todo <- BIOC_PKGS[!vapply(BIOC_PKGS, function(p) nzchar(system.file(package = p)), logical(1))]
+if (length(bioc_todo)) {
+  message("    installing: ", paste(bioc_todo, collapse = ", "))
+  BiocManager::install(bioc_todo, ask = FALSE, update = FALSE)
+} else {
+  message("    all present")
+}
 
 ## ----------------------------------------------------------------- verify ---
 ## Report rather than assume. A package that failed to install is worth seeing
@@ -138,7 +223,7 @@ message("\n  installed versions")
 all_pkgs <- c(CRAN_PKGS, BIOC_PKGS)
 failed <- character(0)
 for (p in all_pkgs) {
-  v <- tryCatch(as.character(packageVersion(p)), error = function(e) NA_character_)
+  v <- installed_version(p)
   if (is.na(v)) failed <- c(failed, p)
   message(sprintf("    %-18s %s", p, ifelse(is.na(v), "FAILED", v)))
 }
