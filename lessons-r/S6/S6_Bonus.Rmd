@@ -202,9 +202,10 @@ library(tidyverse)
 gene_to_plot <- "NOTCH1"
 
 # Extract gene values from log1p TPM matrix
-gene_vals <- as_tibble(t(log1p_tpm[gene_to_plot, , drop = FALSE]), 
-                       rownames = "sample") %>%
-  rename(value = !!gene_to_plot) %>%
+gene_vals <- tibble(
+  sample = colnames(log1p_tpm),
+  value  = as.numeric(log1p_tpm[gene_to_plot, ])
+) %>%
   left_join(meta, by = "sample")
 
 # 1) Violin + jitter + boxplot overlay
@@ -236,11 +237,12 @@ library(tidyverse)
 gene_to_test <- "NOTCH1"
 
 # Extract gene values (log1p TPM) + chamber labels
-gene_vals <- as_tibble(t(log1p_tpm[gene_to_test, , drop = FALSE]), 
-                       rownames = "sample") %>%
-  rename(value = !!gene_to_test) %>%
-  left_join(meta, by = "sample") %>%
-  filter(!is.na(chamber))
+gene_vals <- tibble(
+  sample = colnames(log1p_tpm),
+  value  = as.numeric(log1p_tpm[gene_to_test, ])
+) %>%
+  dplyr::left_join(meta, by = "sample") %>%
+  dplyr::filter(!is.na(chamber))
 
 # Pairwise Wilcoxon rank-sum test with BH adjustment
 pw <- pairwise.wilcox.test(gene_vals$value,
