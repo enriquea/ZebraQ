@@ -25,6 +25,6 @@ the Python track.
 
 - [S6 — From gene lists to biology](https://github.com/enriquea/ZebraQ/blob/main/lessons-r/S6/S6_Gene_Lists_to_Biology.Rmd)
 - [S7 — Orthologs, networks and pathways](https://github.com/enriquea/ZebraQ/blob/main/lessons-r/S7/S7_Orthologs_Networks_Pathways.Rmd)
-- [S8 — Bonus: hands-on with a public dataset (GSE106118)](https://github.com/enriquea/ZebraQ/blob/main/lessons-r/S8/S8_Bonus.Rmd)
+- [S8 — Extra: hands-on with a public dataset (GSE106118)](https://github.com/enriquea/ZebraQ/blob/main/lessons-r/S8/S8_Extra.Rmd)
 
 Each lesson has a rendered `.html` next to its `.Rmd` in the repository.

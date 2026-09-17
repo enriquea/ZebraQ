@@ -6,7 +6,7 @@ An introductory course for beginners in programming and RNA-seq data analysis,
 built for biotechnology students with little or no bioinformatics background.
 
 The course is available in **two parallel tracks: R and Python**. S1-S5 and the
-S8 bonus exist in both, use the same datasets, and reach the same biological
+S8 extra lesson exist in both, use the same datasets, and reach the same biological
 conclusions. S6 and S7 are currently R only; the Python port is pending.
 Which one is taught depends on the cohort; pick whichever suits you.
 
@@ -38,7 +38,7 @@ For more advanced users we recommend the
 | --- | --- |
 | S6 | From gene lists to biology: databases and enrichment analysis |
 | S7 | Orthologs, networks and pathways |
-| S8 | Bonus: hands-on with a public dataset (GSE106118) |
+| S8 | Extra: hands-on with a public dataset (GSE106118) |
 
 ---
 
@@ -55,7 +55,7 @@ Runs in **Google Colab with nothing to install** - click a badge and start.
 | S5 | [Visualising RNA-seq results](lessons-py/S5_PyDESeq2_Visualization.ipynb) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/enriquea/ZebraQ/blob/main/lessons-py/S5_PyDESeq2_Visualization.ipynb) |
 | S6 | *From gene lists to biology* | — R track only, port pending |
 | S7 | *Orthologs, networks and pathways* | — R track only, port pending |
-| S8 | [Bonus — GSE106118](lessons-py/S8_Bonus_GSE106118.ipynb) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/enriquea/ZebraQ/blob/main/lessons-py/S8_Bonus_GSE106118.ipynb) |
+| S8 | [Extra — GSE106118](lessons-py/S8_Extra_GSE106118.ipynb) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/enriquea/ZebraQ/blob/main/lessons-py/S8_Extra_GSE106118.ipynb) |
 
 Every notebook is **self-contained**: it fetches its own data and does not require
 you to have run any earlier lesson.
@@ -77,7 +77,7 @@ R markdown sources and rendered HTML are in [`lessons-r/`](lessons-r/).
 | S5 | [S5_DESeq_visualization.Rmd](lessons-r/S5/S5_DESeq_visualization.Rmd) | [html](lessons-r/S5/S5_DESeq_visualization.html) |
 | S6 | [S6_Gene_Lists_to_Biology.Rmd](lessons-r/S6/S6_Gene_Lists_to_Biology.Rmd) | [html](lessons-r/S6/S6_Gene_Lists_to_Biology.html) |
 | S7 | [S7_Orthologs_Networks_Pathways.Rmd](lessons-r/S7/S7_Orthologs_Networks_Pathways.Rmd) | [html](lessons-r/S7/S7_Orthologs_Networks_Pathways.html) |
-| S8 | [S8_Bonus.Rmd](lessons-r/S8/S8_Bonus.Rmd) | [html](lessons-r/S8/S8_Bonus.html) |
+| S8 | [S8_Extra.Rmd](lessons-r/S8/S8_Extra.Rmd) | [html](lessons-r/S8/S8_Extra.html) |
 
 Required R packages: [`setup/Installation_and_setup.Rmd`](setup/Installation_and_setup.Rmd).
 
@@ -113,7 +113,7 @@ rather than take it on trust.
 | `chd_genes.annotations.tsv` | 276 genes associated with congenital heart disease, with gnomAD constraint metrics (also provided as `.csv` and `.xlsx`) |
 | `salmon.merged.gene_counts.filtered.tsv` | Gene counts from RNA-seq of wild-type and mutant zebrafish (*Danio rerio*) hearts at 48 hpf. **Dataset is incomplete and results are therefore uninterpretable** |
 | `samplesheet.tsv` | Sample metadata for the zebrafish experiment (3 WT, 3 MT) |
-| `GSE106118_HE10W.tsv.gz` | Public human fetal heart expression data used in the S8 bonus lesson |
+| `GSE106118_HE10W.tsv.gz` | Public human fetal heart expression data used in the S8 extra lesson |
 | `enrichment/` | Stored enrichment, ortholog and network results used by S6 and S7 when the online services are unavailable. Regenerate with [`make_enrichment_data.R`](data/enrichment/make_enrichment_data.R) |
 
 ---
