@@ -40,10 +40,10 @@ CRAN_BASE <- "https://packagemanager.posit.co/cran"
 ## tidyverse is required by lessons-r/S8 (which also uses readr::, pulled in by
 ## tidyverse). Keep this list in step with the library() calls in lessons-r/.
 ##
-## enrichR, httr and jsonlite are used by S6 and S7 to talk to Enrichr; biomaRt
-## fetches zebrafish-to-human orthologs in S7. Every one of those steps also has
-## a committed fallback in data/enrichment/, so a failed install or a service
-## outage does not stop the lesson.
+## enrichR (S6, S7) and biomaRt (S7) are used in optional live-service chunks;
+## the lessons read committed copies in data/enrichment/, so a failed install or a
+## service outage does not stop them. httr and jsonlite are needed only by
+## data/enrichment/make_enrichment_data.R, which regenerates those copies.
 CRAN_PKGS <- c(
   "tidyverse", "ggplot2", "ggpubr", "dplyr", "RColorBrewer",
   "readxl", "openxlsx", "pheatmap", "matrixStats", "microbenchmark",

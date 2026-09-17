@@ -96,8 +96,9 @@ certificates on your machine; while this course was being written it failed with
 `SSL certificate problem: certificate has expired`.
 
 That is ordinary. It is also why `data/enrichment/make_enrichment_data.R`
-carries a fallback that asks the same Ensembl for the same four columns over
-plain HTTP, and why the table is committed to the repository.
+carries a fallback that asks the same Ensembl for the same four columns
+through BioMart's web service on the `useast.ensembl.org` mirror, without
+`biomaRt`, and why the table is committed to the repository.
 
 ### From the browser
 
@@ -299,7 +300,7 @@ all_up_go %>%
 
 ```
 
-`Cellular Response to Zinc Ion` at an adjusted p-value of 2 in 10^19. Sixty
+`Cellular Response to Zinc Ion` at an adjusted p-value of about 1.8e-19. Sixty
 significant terms instead of two. A spectacular result.
 
 It is also entirely fabricated. Look at the genes:

@@ -55,8 +55,8 @@ Open `ZebraQ.Rproj` in RStudio, then run this once:
 source(if (file.exists("setup/install_r.R")) "setup/install_r.R" else "install_r.R")
 ```
 
-That is the whole setup. The script checks your R version, installs the nine CRAN
-packages and two Bioconductor packages the lessons use, and prints the version of
+That is the whole setup. The script checks your R version, installs the thirteen CRAN
+packages and three Bioconductor packages the course uses, and prints the version of
 each so you can see that it worked.
 
 ## Why a script instead of `install.packages()`
@@ -79,7 +79,7 @@ compiler toolchain — Rtools on Windows, the Xcode command line tools on macOS 
 which most people do not have, and the install dies partway through. The script
 sets `pkgType = "binary"` so the question never comes up.
 
-One limit worth knowing: the CRAN packages are frozen to a date, but the two
+One limit worth knowing: the CRAN packages are frozen to a date, but the three
 Bioconductor packages are pinned only to a *release* (3.23). Bioconductor issues
 patch updates within a release, so two people installing months apart can differ
 in DESeq2's patch version. There is no dated Bioconductor snapshot to point at.
@@ -120,10 +120,11 @@ From CRAN: `tidyverse` (required by S8), `ggplot2`, `ggpubr`, `dplyr`,
 
 From Bioconductor: `DESeq2`, `EnhancedVolcano`, `biomaRt`.
 
-`enrichR`, `httr` and `jsonlite` let S6 and S7 talk to Enrichr; `biomaRt` fetches
-zebrafish-to-human orthologs in S7. All three of those steps also read from
-committed copies in `data/enrichment/`, so the lessons still run if a package is
-missing or a service is down.
+In the lessons, `enrichR` (S6, S7) and `biomaRt` (S7) appear only in optional
+chunks that talk to live services; the lessons themselves read committed copies in
+`data/enrichment/`, so they still run if either package is missing or a service is
+down. `httr` and `jsonlite` are needed only to regenerate those copies with
+`data/enrichment/make_enrichment_data.R`.
 
 ```{r verify}
 # Check what you ended up with at any point:

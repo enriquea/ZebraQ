@@ -14,6 +14,9 @@ Exercises follow a fixed three-slide rhythm:
 
 Run from the project root:   python3 slides/make_slides.py
 
+Needs python-pptx (pip install python-pptx). It is deliberately not in
+setup/python/: students never build the decks, only the instructor does.
+
 The script is the source of truth until you first edit a deck by hand; after
 that, re-running it will overwrite your edits.
 """
@@ -134,7 +137,8 @@ def answer(prs, heading, body=None, code=None):
         text(s, body, top, body_h, 19, color=MUTED, space_after=12)
         top = top + body_h + Inches(0.3)
     if code:
-        box = text(s, code, top, Inches(1.4), 17)
+        code_h = Emu(int((code.count("\n") + 1) * 17 * 1.3 * 12700))
+        box = text(s, code, top, code_h, 17, space_after=0)
         for p in box.text_frame.paragraphs:
             for r in p.runs:
                 r.font.name = "Menlo"
@@ -145,7 +149,7 @@ def save(prs, name):
     OUT.mkdir(exist_ok=True)
     path = OUT / name
     prs.save(path)
-    print(f"  {path}  ({len(prs.slides.__iter__.__self__._sldIdLst)} slides)")
+    print(f"  {path}  ({len(prs.slides)} slides)")
 
 
 # --- S6 --------------------------------------------------------------------
@@ -177,9 +181,9 @@ def build_s6():
               "STRING — which proteins interact\n"
               "Enrichr — is my list unusually full of any of the above?", size=28)
 
-    question(p, "S5 drew the volcano with\npadj < 0.001 and |log2FC| > 2.5.\n\n"
+    question(p, "S5 drew the volcano with\npvalue < 0.001 and |log2FC| > 2.5.\n\n"
                 "Should we use the same cutoffs\nto pick genes for enrichment?")
-    hint(p, "Those cutoffs keep 48 up and 55 down genes",
+    hint(p, "Those cutoffs keep 55 up and 56 down genes",
             "What was the volcano's cutoff actually for?",
             "What is this cutoff for?")
     answer(p, "No. Different job, different decision.",
@@ -218,7 +222,7 @@ def build_s6():
     hint(p, "Every enrichment table has a Genes column",
             "Read it",
             "opn1sw1, opn1sw2, rhol, rho, opn4a, opn1lw2, opn1mw1, bbc3")
-    answer(p, "Five cone opsins, two rhodopsins — and one honest gene.",
+    answer(p, "Four cone opsins, two rhodopsins, a melanopsin — and one honest gene.",
            "Light is electromagnetic radiation, so photoreceptor genes get annotated\n"
            "to a radiation term. The statistics are correct; the label misleads.\n"
            "The seven also sit in 'response to light stimulus', mixed with clock genes.\n\n"
@@ -279,7 +283,7 @@ def build_s7():
     answer(p, "No. The ambiguity is on the side we are leaving.",
            "'1:1' has to mean one zebrafish gene, one human gene: n_human_partners == 1.\n\n"
            "Ensembl's one2one label would silently delete serpinh1b — one of the most\n"
-           "convincing gene in the experiment — and every other gene the teleost\n"
+           "convincing genes in the experiment — and every other gene the teleost\n"
            "duplication touched.",
            "serpinh1b   log2FC +3.72   padj 1e-112   (3rd smallest padj of 354)")
 

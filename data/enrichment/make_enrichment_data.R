@@ -11,7 +11,8 @@
 #
 # Run from the project root:   Rscript data/enrichment/make_enrichment_data.R
 #
-# Everything here is deliberately plain base R + httr. It is meant to be read.
+# Needs dplyr, readr, httr and jsonlite (biomaRt is optional: it is tried first
+# and skipped if missing). Kept deliberately plain; it is meant to be read.
 # ---------------------------------------------------------------------------
 
 suppressPackageStartupMessages({
@@ -130,9 +131,12 @@ enrich(genes_down, "KEGG_2019",                  FISH, "fish_KEGG_2019_down.tsv"
 # current, and it does fail: during course development it died with
 # "SSL certificate problem: certificate has expired" on R 4.1.3.
 #
-# The fallback asks the same Ensembl BioMart for the same four attributes over
-# plain HTTP. Note the mirror: www.ensembl.org answers this URL with a 308
-# redirect, useast.ensembl.org answers it with data.
+# The fallback asks the same Ensembl BioMart for the same four attributes
+# through its REST web service with httr, bypassing biomaRt. It is still HTTPS;
+# what differs is the client, and on the development machine httr's certificate
+# store worked where biomaRt's connection did not. Note the mirror:
+# www.ensembl.org answers this URL with a 308 redirect, useast.ensembl.org
+# answers it with data.
 # ---------------------------------------------------------------------------
 
 message("== 3. orthologs ==")
@@ -263,7 +267,8 @@ string_network <- function(genes, species = 9606) {
            query = list(identifiers = paste(genes, collapse = "\r"),
                         species = species))
   stop_for_status(r)
-  read_tsv(content(r, "text", encoding = "UTF-8"), show_col_types = FALSE)
+  tb <- read_tsv(content(r, "text", encoding = "UTF-8"), show_col_types = FALSE)
+  require_columns(tb, c("preferredName_A", "preferredName_B", "score"), "STRING")
 }
 
 edges <- string_network(human_down)

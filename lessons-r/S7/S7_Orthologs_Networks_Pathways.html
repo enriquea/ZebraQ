@@ -445,8 +445,10 @@ this course was being written it failed with
 <code>SSL certificate problem: certificate has expired</code>.</p>
 <p>That is ordinary. It is also why
 <code>data/enrichment/make_enrichment_data.R</code> carries a fallback
-that asks the same Ensembl for the same four columns over plain HTTP,
-and why the table is committed to the repository.</p>
+that asks the same Ensembl for the same four columns through BioMart’s
+web service on the <code>useast.ensembl.org</code> mirror, without
+<code>biomaRt</code>, and why the table is committed to the
+repository.</p>
 </div>
 <div id="from-the-browser" class="section level3">
 <h3>From the browser</h3>
@@ -664,7 +666,7 @@ all_up_go %&gt;%
 ## 4 Cellular Response to Copper Ion (GO:0071280)  12/17             1.04e-17
 ## 5 Response to Copper Ion (GO:0046688)           12/21             3.80e-16</code></pre>
 <p><code>Cellular Response to Zinc Ion</code> at an adjusted p-value of
-2 in 10^19. Sixty significant terms instead of two. A spectacular
+about 1.8e-19. Sixty significant terms instead of two. A spectacular
 result.</p>
 <p>It is also entirely fabricated. Look at the genes:</p>
 <pre class="r"><code>all_up_go$Genes[1]</code></pre>
