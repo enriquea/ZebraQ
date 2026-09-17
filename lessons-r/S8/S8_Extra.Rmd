@@ -6,11 +6,13 @@ output: html_document
 ---
 
 ```{r setup}
-# Packages
+# Packages used anywhere in this lesson. All of them are installed by
+# setup/install_r.R.
 library(tidyverse)
 library(matrixStats)
 library(pheatmap)
 library(RColorBrewer)
+library(openxlsx)
 
 # Paths (relative to this .Rmd, as in S2-S4)
 expr_file <- "../../data/GSE106118_HE10W.tsv.gz"  # or .csv
@@ -113,9 +115,6 @@ ggplot(top_long, aes(reorder(Gene, -log1p_tpm), log1p_tpm, fill = chamber)) +
 ```{r chamber correlation}
 ### Chamber-averaged expression → chamber–chamber correlation (tidyverse)
 
-library(tidyverse)
-library(pheatmap)
-
 # 1) Build a gene × chamber matrix of mean expression (using log1p TPM)
 #    - Average each gene across samples within a chamber
 gene_chamber_means <- tibble::as_tibble(log1p_tpm, rownames = "Gene") %>%
@@ -197,8 +196,6 @@ plot_bias(ventricular, "LV", "RV", "delta_LV_RV", "Top chamber-biased genes: LV 
 
 ```{r single gene expression profiling}
 ### Expression of a single gene across chambers (example: NOTCH1)
-library(tidyverse)
-
 gene_to_plot <- "NOTCH1"
 
 # Extract gene values from log1p TPM matrix
@@ -232,8 +229,6 @@ ggplot(gene_vals, aes(x = chamber, y = value, fill = chamber)) +
 ```{r pairwise comparisons at gene level}
 ### Pairwise comparisons of NOTCH1 expression across chambers
 
-library(tidyverse)
-
 gene_to_test <- "NOTCH1"
 
 # Extract gene values (log1p TPM) + chamber labels
@@ -263,10 +258,6 @@ pw_df
 ```
 
 ```{r getting top expressed genes}
-# Install if needed
-if (!requireNamespace("openxlsx", quietly = TRUE)) install.packages("openxlsx")
-library(openxlsx)
-
 #--- 1) Calculate average expression per chamber -----------------
 chamber_means <- tibble::as_tibble(log1p_tpm, rownames = "Gene") %>%
   tidyr::pivot_longer(-Gene, names_to = "sample", values_to = "log1p_tpm") %>%
