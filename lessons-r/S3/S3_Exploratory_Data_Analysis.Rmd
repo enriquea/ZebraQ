@@ -129,7 +129,7 @@ ggplot(chd_genes, aes(x = obs_syn, y = obs_lof)) +
 # Scatter plot with regression line and correlation coefficient
 ggplot(chd_genes, aes(x = obs_syn, y = exp_syn)) + 
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
+  geom_smooth(method = "lm", se = TRUE) +
   labs(title = "Scatter plot with regression line") +
   stat_cor(method = "pearson", label.x = 100, label.y = 1500)
 
@@ -161,7 +161,9 @@ ggplot(chd_genes, aes(x = plof, fill = category)) +
 ggplot(chd_genes, aes(x = category, fill = category)) + 
   geom_bar() +
   labs(title = "Bar plot of number of genes per category")
+```
 
+```{r Bar plot - count number of genes per chromosome, echo=TRUE}
 # count number of genes per chromosome
 ggplot(chd_genes, aes(x = chromosome)) + 
   geom_bar() +
@@ -209,7 +211,7 @@ Note: A R-package can be extended to add new functionalities. The ggpubr package
 
 ```{r Boxplot with statistical test, echo=TRUE}
 
-ggboxplot(chd_genes, 
+ggpubr::ggboxplot(chd_genes, 
           x = "category", 
           y = "plof",
           color = "category", 
@@ -218,6 +220,33 @@ ggboxplot(chd_genes,
   labs(title = "Boxplot of plof by category")
 
 ```
+
+```{r shapiro test - U distribution}
+
+# Testing normality (U distribution)
+
+u_dist = runif(1000, min = 2, max = 4)
+shapiro.test(u_dist)
+hist(u_dist)
+
+```
+
+
+
+```{r shapiro test - N distribution}
+
+# Testing normality (N distribution)
+
+n_dist = rnorm(1000, mean = 5, sd = 3)
+shapiro.test(n_dist)
+hist(n_dist)
+
+```
+
+```{r shapiro test}
+shapiro.test(chd_genes$plof)
+```
+
 
 ## 6. R session information
 
