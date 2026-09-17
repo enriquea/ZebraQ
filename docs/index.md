@@ -1,5 +1,3 @@
-# ZebraQ
-
 Introduction to R / Python and bulk RNA-seq data analysis with DESeq2.
 
 This page is published from `docs/` on `main`; the lessons themselves live
@@ -27,4 +25,6 @@ the Python track.
 - [S7 — Orthologs, networks and pathways](https://github.com/enriquea/ZebraQ/blob/main/lessons-r/S7/S7_Orthologs_Networks_Pathways.Rmd)
 - [S8 — Extra: hands-on with a public dataset (GSE106118)](https://github.com/enriquea/ZebraQ/blob/main/lessons-r/S8/S8_Extra.Rmd)
 
-Each lesson has a rendered `.html` next to its `.Rmd` in the repository.
+Each lesson also has a rendered `.html` next to its `.Rmd` in the repository.
+GitHub displays those as source; download one, or knit the `.Rmd`, to read it as
+a page.

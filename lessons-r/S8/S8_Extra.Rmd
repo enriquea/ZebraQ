@@ -316,7 +316,9 @@ list_A <- top_per_chamber %>%
   filter(chamber == "LA") %>%
   pull(Gene)
 
-# List B: the genes with the largest LA - RA difference.
+# List B: the 50 genes most strongly biased towards LA over RA.
+# This is one-directional: genes higher in RA than LA are not included.
+# Step 5 takes both directions for the ventricles.
 list_B <- atrial %>%
   slice_max(delta_LA_RA, n = 50) %>%
   pull(Gene)

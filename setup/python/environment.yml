@@ -13,7 +13,7 @@
 # step most likely to fail on a student laptop.
 #
 # One exception, deliberately left out: the optional enrichment section at the
-# end of S6 uses gseapy, which has no current Windows build on conda (bioconda
+# end of S8 uses gseapy, which has no current Windows build on conda (bioconda
 # stops at 0.9.x for win-64). That lesson installs it with pip at the point of
 # use, and it needs internet access either way.
 
@@ -37,7 +37,7 @@ dependencies:
 
   # statistics
   - scipy=1.17.1
-  - statsmodels=0.14.6        # Benjamini-Hochberg correction (S6)
+  - statsmodels=0.14.6        # Benjamini-Hochberg correction (S8)
   - scikit-learn=1.9.0
 
   # differential expression

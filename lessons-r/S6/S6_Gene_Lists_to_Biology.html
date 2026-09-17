@@ -409,10 +409,24 @@ length(genes_up)</code></pre>
 <pre><code>## [1] 588</code></pre>
 <p>These cutoffs differ from those used for the volcano plot in S5. That
 plot used <code>y = &#39;pvalue&#39;</code>, highlighting genes with a raw
-<code>pvalue &lt; 0.001</code> and <code>|log2FC| &gt; 2.5</code> (55 up
-and 56 down, 111 in total).</p>
-<p>The two thresholds serve different purposes. The volcano cutoffs
-limit the number of labelled points on the figure; the cutoffs above
+<code>pvalue &lt; 0.001</code> and <code>|log2FC| &gt; 2.5</code>, which
+selects 55 up and 56 down, 111 in total.</p>
+<p>Fewer than that are visible in the figure: S5 also sets
+<code>xlim = c(-4, 4)</code> and <code>ylim = c(0, 10)</code>, and those
+are scale limits, so points outside the range are dropped from the plot
+rather than drawn at the edge.</p>
+<pre class="r"><code>s5 = res %&gt;% filter(pvalue &lt; 0.001, abs(log2FoldChange) &gt; 2.5)
+
+nrow(s5)</code></pre>
+<pre><code>## [1] 111</code></pre>
+<pre class="r"><code># of those, the ones inside the axis ranges S5 used
+sum(abs(s5$log2FoldChange) &lt;= 4 &amp; -log10(s5$pvalue) &lt;= 10)</code></pre>
+<pre><code>## [1] 40</code></pre>
+<p>So the figure shows 40 of the 111, and the genes it omits are the
+most extreme ones. This is worth knowing before using a published
+volcano plot to judge how many genes changed.</p>
+<p>The thresholds serve different purposes: the volcano cutoffs control
+which points are highlighted and labelled, while the cutoffs above
 define the gene set for enrichment. Thresholds should be chosen for the
 analysis at hand and reported explicitly.</p>
 <pre class="r"><code># Save the lists for submission to the enrichment web tools.
@@ -536,15 +550,48 @@ downloaded file is found.</p>
 <div id="read-the-results-into-r" class="section level2">
 <h2>6. Read the results into R</h2>
 <pre class="r"><code># Use the downloaded file if present; otherwise the copy stored in the
-# repository. Both contain the same table.
-read_enrichment = function(mine, committed) {
+# repository. The checks below stop the lesson if the file is not the table it
+# is expected to be, rather than letting a wrong file produce a wrong answer.
+read_enrichment = function(mine, committed, submitted) {
   path = if (file.exists(mine)) mine else committed
   message(&quot;reading: &quot;, path)
-  read_tsv(path, show_col_types = FALSE)
+
+  # grouping_mark = &quot;&quot; stops a file that was opened and re-saved in a
+  # comma-decimal spreadsheet from being read as numbers a million times too
+  # large, which read_tsv would otherwise do without any warning.
+  tb = read_tsv(path, show_col_types = FALSE,
+                locale = locale(decimal_mark = &quot;.&quot;, grouping_mark = &quot;&quot;))
+
+  needed = c(&quot;Term&quot;, &quot;Overlap&quot;, &quot;Adjusted P-value&quot;, &quot;Genes&quot;)
+  missing = setdiff(needed, names(tb))
+  if (length(missing) &gt; 0) {
+    stop(path, &quot;: missing column(s) &quot;, paste(missing, collapse = &quot;, &quot;),
+         &quot;. Is this an Enrichr export?&quot;, call. = FALSE)
+  }
+  if (nrow(tb) == 0) {
+    stop(path, &quot;: the file contains no rows.&quot;, call. = FALSE)
+  }
+  if (!is.numeric(tb$`Adjusted P-value`) || any(tb$`Adjusted P-value` &gt; 1, na.rm = TRUE)) {
+    stop(path, &quot;: &#39;Adjusted P-value&#39; is not a probability. If you opened the &quot;,
+         &quot;file in a spreadsheet and saved it, download it again.&quot;, call. = FALSE)
+  }
+
+  # Check the table was produced from the list we think it was: a download
+  # saved under the wrong name would otherwise be read without complaint.
+  found = unique(unlist(strsplit(tb$Genes, &quot;;&quot;)))
+  shared = mean(toupper(found) %in% toupper(submitted))
+  if (shared &lt; 0.9) {
+    stop(path, &quot;: only &quot;, round(100 * shared), &quot;% of the genes in this table are &quot;,
+         &quot;in the list submitted here. This looks like the wrong download.&quot;,
+         call. = FALSE)
+  }
+
+  tb
 }
 
 fish_down = read_enrichment(&quot;outputs/fish_GO_down.txt&quot;,
-                            &quot;../../data/enrichment/fish_GO_BP_2018_down.tsv&quot;)</code></pre>
+                            &quot;../../data/enrichment/fish_GO_BP_2018_down.tsv&quot;,
+                            genes_down)</code></pre>
 <pre><code>## reading: ../../data/enrichment/fish_GO_BP_2018_down.tsv</code></pre>
 <pre class="r"><code># One row per GO term tested.
 dim(fish_down)</code></pre>
@@ -569,7 +616,8 @@ sig_down %&gt;% select(Term, Overlap, `Adjusted P-value`)</code></pre>
 <p>Five of the 918 terms tested are significant. The same analysis for
 the up-regulated genes:</p>
 <pre class="r"><code>fish_up = read_enrichment(&quot;outputs/fish_GO_up.txt&quot;,
-                          &quot;../../data/enrichment/fish_GO_BP_2018_up.tsv&quot;)</code></pre>
+                          &quot;../../data/enrichment/fish_GO_BP_2018_up.tsv&quot;,
+                          genes_up)</code></pre>
 <pre><code>## reading: ../../data/enrichment/fish_GO_BP_2018_up.tsv</code></pre>
 <pre class="r"><code>sum(fish_up$`Adjusted P-value` &lt; 0.05)</code></pre>
 <pre><code>## [1] 0</code></pre>
@@ -713,13 +761,23 @@ chd_symbols = tolower(chd$gene_symbol)
 in_chd = tolower(res$gene) %in% chd_symbols
 is_de  = res$gene %in% de$gene
 
-table(CHD = in_chd, DE = is_de)</code></pre>
+# How many CHD symbols exist in this dataset at all? A symbol that never
+# matches cannot contribute to the test below.
+length(intersect(chd_symbols, tolower(res$gene)))</code></pre>
+<pre><code>## [1] 127</code></pre>
+<pre class="r"><code>length(unique(chd_symbols))</code></pre>
+<pre><code>## [1] 276</code></pre>
+<pre class="r"><code>table(CHD = in_chd, DE = is_de)</code></pre>
 <pre><code>##        DE
 ## CHD     FALSE  TRUE
 ##   FALSE 12692   936
 ##   TRUE    121     6</code></pre>
 <pre class="r"><code>fisher.test(table(in_chd, is_de))$p.value</code></pre>
 <pre><code>## [1] 0.4775667</code></pre>
+<p>Note the two counts printed above: only 127 of the 276 CHD symbols
+match a zebrafish symbol at all, so 149 genes never enter the test. A
+negative result has to be read in the light of how much of the input was
+actually testable.</p>
 <p><strong>Question.</strong> The overlap is not significant. Does this
 mean the CHD genes are not relevant to this experiment? Check which CHD
 genes are differentially expressed before answering:</p>

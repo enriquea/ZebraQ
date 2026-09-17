@@ -37,8 +37,9 @@ BIOC_FOR_R <- c("4.1" = "3.14", "4.2" = "3.16", "4.3" = "3.18",
 CRAN_SNAPSHOT <- "2026-09-01"
 CRAN_BASE <- "https://packagemanager.posit.co/cran"
 
-## tidyverse is required by lessons-r/S8 (which also uses readr::, pulled in by
-## tidyverse). Keep this list in step with the library() calls in lessons-r/.
+## tidyverse is required by lessons-r/S8. Keep this list in step with the
+## library() calls in lessons-r/, bearing in mind that tidyverse supplies readr,
+## tibble and the other core packages that some lessons attach individually.
 ##
 ## enrichR (S6, S7) and biomaRt (S7) are used in optional live-service chunks;
 ## the lessons read committed copies in data/enrichment/, so a failed install or a

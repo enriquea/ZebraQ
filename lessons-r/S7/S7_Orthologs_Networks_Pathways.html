@@ -531,6 +531,11 @@ length(genes_up);   length(human_up)</code></pre>
 <pre class="r"><code>length(genes_down); length(human_down)</code></pre>
 <pre><code>## [1] 588</code></pre>
 <pre><code>## [1] 329</code></pre>
+<pre class="r"><code># The stored enrichment tables were produced from these exact lists. If Ensembl
+# is updated and the mapping shifts, stop here rather than letting the counts
+# quoted in the text disagree with the results shown below.
+stopifnot(identical(human_up,   sort(readLines(&quot;../../data/enrichment/genes_up_human.txt&quot;))),
+          identical(human_down, sort(readLines(&quot;../../data/enrichment/genes_down_human.txt&quot;))))</code></pre>
 <p>Different zebrafish genes can map to the same human gene
 (<code>col1a1a</code> and <code>col1a1b</code> both map to
 <code>COL1A1</code>). Because only unique human symbols are kept, this
@@ -548,15 +553,47 @@ Biological Process 2025</strong>, as in S6. Save the up-regulated result
 as <code>outputs/human_GO_up.txt</code> and the down-regulated result as
 <code>outputs/human_GO_down.txt</code>. If the files are not present,
 the stored copies are used.</p>
-<pre class="r"><code>read_enrichment = function(mine, committed) {
+<pre class="r"><code>read_enrichment = function(mine, committed, submitted) {
   path = if (file.exists(mine)) mine else committed
   message(&quot;reading: &quot;, path)
-  read_tsv(path, show_col_types = FALSE)
+
+  # grouping_mark = &quot;&quot; stops a file that was opened and re-saved in a
+  # comma-decimal spreadsheet from being read as numbers a million times too
+  # large, which read_tsv would otherwise do without any warning.
+  tb = read_tsv(path, show_col_types = FALSE,
+                locale = locale(decimal_mark = &quot;.&quot;, grouping_mark = &quot;&quot;))
+
+  needed = c(&quot;Term&quot;, &quot;Overlap&quot;, &quot;Adjusted P-value&quot;, &quot;Genes&quot;)
+  missing = setdiff(needed, names(tb))
+  if (length(missing) &gt; 0) {
+    stop(path, &quot;: missing column(s) &quot;, paste(missing, collapse = &quot;, &quot;),
+         &quot;. Is this an Enrichr export?&quot;, call. = FALSE)
+  }
+  if (nrow(tb) == 0) {
+    stop(path, &quot;: the file contains no rows.&quot;, call. = FALSE)
+  }
+  if (!is.numeric(tb$`Adjusted P-value`) || any(tb$`Adjusted P-value` &gt; 1, na.rm = TRUE)) {
+    stop(path, &quot;: &#39;Adjusted P-value&#39; is not a probability. If you opened the &quot;,
+         &quot;file in a spreadsheet and saved it, download it again.&quot;, call. = FALSE)
+  }
+
+  # Check the table was produced from the list we think it was: a download
+  # saved under the wrong name would otherwise be read without complaint.
+  found = unique(unlist(strsplit(tb$Genes, &quot;;&quot;)))
+  shared = mean(toupper(found) %in% toupper(submitted))
+  if (shared &lt; 0.9) {
+    stop(path, &quot;: only &quot;, round(100 * shared), &quot;% of the genes in this table are &quot;,
+         &quot;in the list submitted here. This looks like the wrong download.&quot;,
+         call. = FALSE)
+  }
+
+  tb
 }
 
 # Rename each Enrichr download when saving it (see S6, section 5).
 human_up_go = read_enrichment(&quot;outputs/human_GO_up.txt&quot;,
-                              &quot;../../data/enrichment/human_GO_BP_2025_up.tsv&quot;)</code></pre>
+                              &quot;../../data/enrichment/human_GO_BP_2025_up.tsv&quot;,
+                              human_up)</code></pre>
 <pre><code>## reading: ../../data/enrichment/human_GO_BP_2025_up.tsv</code></pre>
 <pre class="r"><code>human_up_go %&gt;%
   filter(`Adjusted P-value` &lt; 0.05) %&gt;%
@@ -581,7 +618,8 @@ be checked against a case where the expected outcome is known. The
 down-regulated list was already enriched in the zebrafish analysis;
 after mapping, it should give a similar result.</p>
 <pre class="r"><code>human_down_go = read_enrichment(&quot;outputs/human_GO_down.txt&quot;,
-                                &quot;../../data/enrichment/human_GO_BP_2025_down.tsv&quot;)</code></pre>
+                                &quot;../../data/enrichment/human_GO_BP_2025_down.tsv&quot;,
+                                human_down)</code></pre>
 <pre><code>## reading: ../../data/enrichment/human_GO_BP_2025_down.tsv</code></pre>
 <pre class="r"><code>human_down_go %&gt;%
   filter(`Adjusted P-value` &lt; 0.05) %&gt;%
@@ -607,11 +645,19 @@ after mapping, it should give a similar result.</p>
 ## 7     5.880282e-04
 ## 8     7.128748e-04</code></pre>
 <pre class="r"><code># Genes in the extracellular matrix term, used again in section 8.
-ecm_genes = human_down_go %&gt;%
-  filter(grepl(&quot;^Extracellular Matrix Organization&quot;, Term)) %&gt;%
-  pull(Genes) %&gt;%
-  strsplit(&quot;;&quot;) %&gt;%
-  unlist()
+# Require exactly one significant match: GO term names change between releases
+# (the 2021 library does not use this capitalisation), and a non-significant
+# row would otherwise be used here without any indication.
+ecm_row = human_down_go %&gt;%
+  filter(grepl(&quot;extracellular matrix organization&quot;, Term, ignore.case = TRUE),
+         `Adjusted P-value` &lt; 0.05)
+
+if (nrow(ecm_row) != 1) {
+  stop(&quot;expected one significant extracellular matrix term, found &quot;, nrow(ecm_row),
+       call. = FALSE)
+}
+
+ecm_genes = unlist(strsplit(ecm_row$Genes, &quot;;&quot;))
 
 ecm_genes</code></pre>
 <pre><code>##  [1] &quot;COL11A1&quot; &quot;COL11A2&quot; &quot;LOXL3&quot;   &quot;COL1A1&quot;  &quot;ADAMTS5&quot; &quot;COL1A2&quot;  &quot;COL2A1&quot; 
@@ -642,6 +688,11 @@ all_up_go %&gt;%
 ## 3 Cellular Response to Cadmium Ion (GO:0071276) 12/17             1.04e-17
 ## 4 Cellular Response to Copper Ion (GO:0071280)  12/17             1.04e-17
 ## 5 Response to Copper Ion (GO:0046688)           12/21             3.80e-16</code></pre>
+<pre class="r"><code># how many terms are significant here, against 2 with the filter applied
+sum(all_up_go$`Adjusted P-value` &lt; 0.05)</code></pre>
+<pre><code>## [1] 60</code></pre>
+<pre class="r"><code>sum(human_up_go$`Adjusted P-value` &lt; 0.05)</code></pre>
+<pre><code>## [1] 2</code></pre>
 <p>The top term is <code>Cellular Response to Zinc Ion</code> (adjusted
 p-value about 1.8e-19), and 60 terms are significant instead of 2. The
 genes behind the top term:</p>
@@ -667,8 +718,17 @@ genes behind the top term:</p>
 come from a single zebrafish gene, <code>mt2</code>. One differentially
 expressed gene is counted twelve times, which violates the assumption of
 the enrichment test that genes are counted independently. The same
-occurs in the down-regulated list, where four <code>ugt</code> genes
-each map to 19 human UGT genes.</p>
+occurs in the down-regulated list:</p>
+<pre class="r"><code>orth %&gt;%
+  filter(zfish_symbol %in% genes_down, grepl(&quot;^ugt&quot;, zfish_symbol)) %&gt;%
+  count(zfish_symbol, name = &quot;human_partners&quot;)</code></pre>
+<pre><code>## # A tibble: 4 x 2
+##   zfish_symbol human_partners
+##   &lt;chr&gt;                 &lt;int&gt;
+## 1 ugt2b3                   19
+## 2 ugt2b5                   19
+## 3 ugt5a1                   19
+## 4 ugt5b1                   19</code></pre>
 <p>When one gene maps to several orthologs, check how many human genes
 each zebrafish gene contributes before interpreting the enrichment.</p>
 </div>
@@ -686,8 +746,10 @@ summary_table = lapply(vintages, function(year) {
     release     = year,
     terms_tested = nrow(tb),
     significant  = nrow(sig),
-    top_term     = sub(&quot; \\(GO:.*&quot;, &quot;&quot;, sig$Term[1]),
-    top_padj     = signif(sig$`Adjusted P-value`[1], 2)
+    # A release with no significant term would otherwise show as NA, which reads
+    # like a formatting problem rather than a result.
+    top_term     = if (nrow(sig) == 0) &quot;none significant&quot; else sub(&quot; \\(GO:.*&quot;, &quot;&quot;, sig$Term[1]),
+    top_padj     = if (nrow(sig) == 0) NA_real_ else signif(sig$`Adjusted P-value`[1], 2)
   )
 })
 
