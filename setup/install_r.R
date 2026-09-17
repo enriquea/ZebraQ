@@ -37,13 +37,20 @@ BIOC_FOR_R <- c("4.1" = "3.14", "4.2" = "3.16", "4.3" = "3.18",
 CRAN_SNAPSHOT <- "2026-09-01"
 CRAN_BASE <- "https://packagemanager.posit.co/cran"
 
-## tidyverse is required by lessons-r/S6 (which also uses readr::, pulled in by
-## tidyverse). Keep this list in step with the library() calls in lessons-r/.
+## tidyverse is required by lessons-r/S8. Keep this list in step with the
+## library() calls in lessons-r/, bearing in mind that tidyverse supplies readr,
+## tibble and the other core packages that some lessons attach individually.
+##
+## enrichR (S6, S7) and biomaRt (S7) are used in optional live-service chunks;
+## the lessons read committed copies in data/enrichment/, so a failed install or a
+## service outage does not stop them. httr and jsonlite are needed only by
+## data/enrichment/make_enrichment_data.R, which regenerates those copies.
 CRAN_PKGS <- c(
   "tidyverse", "ggplot2", "ggpubr", "dplyr", "RColorBrewer",
-  "readxl", "openxlsx", "pheatmap", "matrixStats", "microbenchmark"
+  "readxl", "openxlsx", "pheatmap", "matrixStats", "microbenchmark",
+  "enrichR", "httr", "jsonlite"
 )
-BIOC_PKGS <- c("DESeq2", "EnhancedVolcano")
+BIOC_PKGS <- c("DESeq2", "EnhancedVolcano", "biomaRt")
 
 ## ------------------------------------------------------------ R version ---
 current <- paste(R.version$major, strsplit(R.version$minor, ".", fixed = TRUE)[[1]][1], sep = ".")
