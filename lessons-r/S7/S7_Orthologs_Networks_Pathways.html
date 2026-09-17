@@ -433,54 +433,27 @@ orth = getBM(
 
 head(orth)</code></pre>
 <p>This chunk is not evaluated when the lesson is knitted, and it may
-well fail if you run it. <code>biomaRt</code> depends on Ensembl’s
-service staying where the installed version of the package expects it,
-and that has not held. Two failures seen while preparing this
-course:</p>
+fail if you run it. <code>biomaRt</code> needs Ensembl’s service to be
+reachable and to be where the installed version of the package expects
+it, and that is not always the case. Two errors seen while preparing
+this course:</p>
 <ul>
-<li><code>SSL certificate problem: certificate has expired</code>, which
-comes from the machine’s certificate store rather than from
-Ensembl.</li>
-<li><code>Error in bmRequest(...) : Not Found (HTTP 404)</code>, because
-<code>www.ensembl.org</code> now answers this endpoint with a redirect
-to a dated archive host that older <code>biomaRt</code> versions do not
-follow. On <code>biomaRt</code> 2.50 (the version that pairs with R 4.1)
-there is no way round this from inside the package: naming a mirror or
-an archive host gets past the first call, but <code>getBM()</code> then
-fails as well. R 4.6, which this course is pinned to, ships a much newer
-<code>biomaRt</code>.</li>
+<li><code>SSL certificate problem: certificate has expired</code></li>
+<li><code>Error in bmRequest(...) : Not Found (HTTP 404)</code></li>
 </ul>
-<p>Neither is a mistake on your part. This is the usual cost of
-depending on a live service, and the reason the ortholog table is stored
-in the repository.</p>
-<p>If you want to fetch the data live and <code>biomaRt</code> will not
-connect, the same query works as a plain web request. Note the user
-agent: Ensembl’s mirrors currently answer requests carrying R’s default
-one with <code>HTTP 403</code>.</p>
-<pre class="r"><code>library(httr)
-
-query = paste0(
-  &#39;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;!DOCTYPE Query&gt;&#39;,
-  &#39;&lt;Query virtualSchemaName=&quot;default&quot; formatter=&quot;TSV&quot; header=&quot;1&quot; uniqueRows=&quot;1&quot; &#39;,
-  &#39;count=&quot;&quot; datasetConfigVersion=&quot;0.6&quot;&gt;&#39;,
-  &#39;&lt;Dataset name=&quot;drerio_gene_ensembl&quot; interface=&quot;default&quot;&gt;&#39;,
-  &#39;&lt;Attribute name=&quot;external_gene_name&quot;/&gt;&#39;,
-  &#39;&lt;Attribute name=&quot;hsapiens_homolog_associated_gene_name&quot;/&gt;&#39;,
-  &#39;&lt;Attribute name=&quot;hsapiens_homolog_orthology_type&quot;/&gt;&#39;,
-  &#39;&lt;/Dataset&gt;&lt;/Query&gt;&#39;)
-
-response = GET(&quot;https://useast.ensembl.org/biomart/martservice&quot;,
-               query = list(query = query),
-               user_agent(&quot;Mozilla/5.0&quot;))
-
-orth_live = read_tsv(content(response, &quot;text&quot;, encoding = &quot;UTF-8&quot;),
-                     show_col_types = FALSE)
-
-head(orth_live)</code></pre>
-<p><code>data/enrichment/make_enrichment_data.R</code> does exactly
-this: it tries <code>biomaRt</code> first, and otherwise sends the
-request above to each Ensembl host in turn until one returns a
-table.</p>
+<p>Neither means you did anything wrong. Ensembl changed where this
+service lives, and older versions of <code>biomaRt</code> look in the
+old place. It is worth seeing once, because depending on an outside
+service is normal in this kind of analysis, and so is having it
+fail.</p>
+<p>There are two ways on, and the lesson uses both:</p>
+<ol style="list-style-type: decimal">
+<li>Run the query on the Ensembl website instead, as described
+next.</li>
+<li>Use the ortholog table stored in <code>data/enrichment/</code>,
+which is what the rest of this lesson reads. It was produced by the same
+query.</li>
+</ol>
 </div>
 <div id="using-the-website" class="section level3">
 <h3>Using the website</h3>

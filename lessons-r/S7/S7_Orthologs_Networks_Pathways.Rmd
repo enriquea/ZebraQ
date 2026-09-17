@@ -87,55 +87,24 @@ head(orth)
 
 ```
 
-This chunk is not evaluated when the lesson is knitted, and it may well fail if
-you run it. `biomaRt` depends on Ensembl's service staying where the installed
-version of the package expects it, and that has not held. Two failures seen
-while preparing this course:
+This chunk is not evaluated when the lesson is knitted, and it may fail if you
+run it. `biomaRt` needs Ensembl's service to be reachable and to be where the
+installed version of the package expects it, and that is not always the case.
+Two errors seen while preparing this course:
 
-- `SSL certificate problem: certificate has expired`, which comes from the
-  machine's certificate store rather than from Ensembl.
-- `Error in bmRequest(...) : Not Found (HTTP 404)`, because `www.ensembl.org`
-  now answers this endpoint with a redirect to a dated archive host that older
-  `biomaRt` versions do not follow. On `biomaRt` 2.50 (the version that pairs
-  with R 4.1) there is no way round this from inside the package: naming a
-  mirror or an archive host gets past the first call, but `getBM()` then fails
-  as well. R 4.6, which this course is pinned to, ships a much newer `biomaRt`.
+- `SSL certificate problem: certificate has expired`
+- `Error in bmRequest(...) : Not Found (HTTP 404)`
 
-Neither is a mistake on your part. This is the usual cost of depending on a live
-service, and the reason the ortholog table is stored in the repository.
+Neither means you did anything wrong. Ensembl changed where this service lives,
+and older versions of `biomaRt` look in the old place. It is worth seeing once,
+because depending on an outside service is normal in this kind of analysis, and
+so is having it fail.
 
-If you want to fetch the data live and `biomaRt` will not connect, the same
-query works as a plain web request. Note the user agent: Ensembl's mirrors
-currently answer requests carrying R's default one with `HTTP 403`.
+There are two ways on, and the lesson uses both:
 
-```{r biomart rest, echo = TRUE, eval = FALSE}
-
-library(httr)
-
-query = paste0(
-  '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE Query>',
-  '<Query virtualSchemaName="default" formatter="TSV" header="1" uniqueRows="1" ',
-  'count="" datasetConfigVersion="0.6">',
-  '<Dataset name="drerio_gene_ensembl" interface="default">',
-  '<Attribute name="external_gene_name"/>',
-  '<Attribute name="hsapiens_homolog_associated_gene_name"/>',
-  '<Attribute name="hsapiens_homolog_orthology_type"/>',
-  '</Dataset></Query>')
-
-response = GET("https://useast.ensembl.org/biomart/martservice",
-               query = list(query = query),
-               user_agent("Mozilla/5.0"))
-
-orth_live = read_tsv(content(response, "text", encoding = "UTF-8"),
-                     show_col_types = FALSE)
-
-head(orth_live)
-
-```
-
-`data/enrichment/make_enrichment_data.R` does exactly this: it tries `biomaRt`
-first, and otherwise sends the request above to each Ensembl host in turn until
-one returns a table.
+1. Run the query on the Ensembl website instead, as described next.
+2. Use the ortholog table stored in `data/enrichment/`, which is what the rest
+   of this lesson reads. It was produced by the same query.
 
 ### Using the website
 
