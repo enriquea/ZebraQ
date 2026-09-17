@@ -83,9 +83,13 @@ def rule(slide, top):
 # --- slide kinds -----------------------------------------------------------
 
 def title_slide(prs, title, subtitle):
+    """Subtitle sits below the title, however many lines the title takes."""
     s = blank(prs)
-    text(s, title, Inches(2.7), Inches(1.4), 40, bold=True)
-    text(s, subtitle, Inches(4.0), Inches(1.0), 22, color=MUTED)
+    lines = title.count("\n") + 1
+    top = Inches(2.7)
+    title_h = Emu(int(lines * 40 * 1.22 * 12700) + Inches(0.2))
+    text(s, title, top, title_h, 40, bold=True)
+    text(s, subtitle, top + title_h + Inches(0.25), Inches(1.0), 22, color=MUTED)
     return s
 
 
@@ -119,13 +123,16 @@ def hint(prs, *hints):
 
 
 def answer(prs, heading, body=None, code=None):
+    """Code block follows the body, however many lines the body takes."""
     s = blank(prs)
     rule(s, Inches(0.85))
-    text(s, heading, Inches(1.3), Inches(1.8), 26, bold=True)
-    top = Inches(3.1)
+    head_lines = heading.count("\n") + 1
+    text(s, heading, Inches(1.3), Emu(int(head_lines * 26 * 1.3 * 12700)), 26, bold=True)
+    top = Inches(1.3) + Emu(int(head_lines * 26 * 1.3 * 12700)) + Inches(0.35)
     if body:
-        box = text(s, body, top, Inches(2.4), 19, color=MUTED, space_after=12)
-        top = Inches(5.0)
+        body_h = Emu(int((body.count("\n") + 1) * 19 * 1.9 * 12700))
+        text(s, body, top, body_h, 19, color=MUTED, space_after=12)
+        top = top + body_h + Inches(0.3)
     if code:
         box = text(s, code, top, Inches(1.4), 17)
         for p in box.text_frame.paragraphs:
@@ -211,11 +218,12 @@ def build_s6():
     hint(p, "Every enrichment table has a Genes column",
             "Read it",
             "opn1sw1, opn1sw2, rhol, rho, opn4a, opn1lw2, opn1mw1, bbc3")
-    answer(p, "Seven opsins and a rhodopsin.",
-           "Light is electromagnetic radiation, so photoreceptor genes are annotated\n"
-           "to a radiation term. The statistics are correct. The label is misleading.\n\n"
-           "The same genes also drive 'response to light stimulus' — one finding,\n"
-           "counted twice.")
+    answer(p, "Five cone opsins, two rhodopsins — and one honest gene.",
+           "Light is electromagnetic radiation, so photoreceptor genes get annotated\n"
+           "to a radiation term. The statistics are correct; the label misleads.\n"
+           "The same seven drive 'response to light stimulus' — one finding, counted twice.\n\n"
+           "The eighth, bbc3, is PUMA, and it really is a DNA-damage gene.\n"
+           "One out of eight, arriving with seven that do not belong, is not evidence.")
 
     statement(p, "Never report a GO term\nbefore reading the genes that produced it.",
               "It takes ten seconds and it is the single most useful habit in this course.", size=34)
@@ -270,16 +278,16 @@ def build_s7():
             "Which direction are we travelling?")
     answer(p, "No. The ambiguity is on the side we are leaving.",
            "'1:1' has to mean one zebrafish gene, one human gene: n_human_partners == 1.\n\n"
-           "Ensembl's one2one label would silently delete serpinh1b — the single most\n"
-           "strongly induced gene in the experiment — and every other gene the teleost\n"
+           "Ensembl's one2one label would silently delete serpinh1b — one of the most\n"
+           "convincing gene in the experiment — and every other gene the teleost\n"
            "duplication touched.",
-           "serpinh1b   log2FC +3.72   padj 1e-112")
+           "serpinh1b   log2FC +3.72   padj 1e-112   (3rd smallest padj of 354)")
 
     answer(p, "In zebrafish: nothing.\nIn human: the unfolded protein response.",
            "131 human genes, from 354 zebrafish ones. Fewer genes, and now a signal.\n"
            "The limit was never the statistics. It was how much had been written down.",
            "Response to Unfolded Protein     6/44    4.2e-04\n"
-           "HSPA5  PDIA4  PDIA6  HSP90B1  HYOU1  UBXN10")
+           "DNAJA1  HSPA2  HSPA4  HSP90AA1  HSPB1  SERPINH1")
 
     question(p, "This result only appeared after\nwe transformed the data.\n\n"
                 "How do you know the transformation\ndid not create it?")

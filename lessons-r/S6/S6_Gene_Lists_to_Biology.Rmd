@@ -68,8 +68,9 @@ length(genes_down)
 
 ```
 
-Notice that these cutoffs are **not** the ones the volcano plot used in S5
-(`padj < 0.001`, `|log2FC| > 2.5`, which keep only 48 and 55 genes).
+Notice that these cutoffs are **not** the ones the volcano plot used in S5.
+That plot passed `y = 'pvalue'`, so it highlighted genes with a raw
+`pvalue < 0.001` and `|log2FC| > 2.5` — 55 up and 56 down, 111 points in all.
 
 That was not an inconsistency. The volcano's cutoffs exist so the gene labels
 stay readable on a crowded figure. Choosing genes for enrichment is a different
@@ -131,9 +132,15 @@ FishEnrichr is the zebrafish version of Enrichr.
 2. Open `outputs/genes_down.txt`, copy all of it, paste it into the box
 3. Submit, then open the **GO Biological Process 2018** results
 4. Use **Export entries to table** to download the table
-5. Save it into this lesson's `outputs/` folder
+5. Save it into this lesson's `outputs/` folder, renaming it to
+   **`fish_GO_down.txt`**
 
-Then do the same for `outputs/genes_up.txt`.
+Then do the same for `outputs/genes_up.txt`, saving that one as
+**`fish_GO_up.txt`**.
+
+The rename matters: Enrichr gives both downloads the same default filename, so
+without it the second one overwrites the first and the chunks below silently
+read the wrong list.
 
 ### Or run it from R
 
@@ -168,7 +175,7 @@ read_enrichment = function(mine, committed) {
   read_tsv(path, show_col_types = FALSE)
 }
 
-fish_down = read_enrichment("outputs/GO_Biological_Process_2018_table.txt",
+fish_down = read_enrichment("outputs/fish_GO_down.txt",
                             "../../data/enrichment/fish_GO_BP_2018_down.tsv")
 
 # One row per GO term tested.
@@ -192,7 +199,7 @@ Five terms out of 918 tested. Now the up-regulated genes:
 
 ```{r up enrichment, echo = TRUE}
 
-fish_up = read_enrichment("outputs/GO_Biological_Process_2018_table_up.txt",
+fish_up = read_enrichment("outputs/fish_GO_up.txt",
                           "../../data/enrichment/fish_GO_BP_2018_up.tsv")
 
 sum(fish_up$`Adjusted P-value` < 0.05)
@@ -254,21 +261,29 @@ Look at those five rows carefully before reading on.
 
 Three things should bother you.
 
-**The top term is one gene family.** All 21 genes behind "extracellular matrix
-organization" are collagens, plus one collagen cross-linking enzyme. That is a
-real and coherent finding, but it is one story, not 21 independent ones.
+**The top term is mostly one gene family.** Nineteen of the 21 genes behind
+"extracellular matrix organization" are collagens. The other two are `loxl3a`, a
+collagen cross-linking enzyme, and `zgc:113232`, an unnamed clone identifier.
+That is a real and coherent finding, but it is largely one story about collagen,
+not 21 independent ones.
 
-**Three terms are the same genes wearing different hats.** "Notochord
-morphogenesis" and "skeletal system development" are driven by the same
-collagens as the term above them. Ranked lists make these look like three
-findings. They are one.
+**Other terms re-use those same collagens.** "Notochord morphogenesis" shares 3
+of its 6 genes with the term above it, and "skeletal system development" shares 7
+of its 18. So they are not independent confirmations — but they are not pure
+duplicates either. Count the shared genes before deciding how much a second term
+adds; the ranked list will not do it for you.
 
 **One term is not about what it says.** "Cellular response to radiation" is
-carried by `opn1sw1`, `opn1sw2`, `rhol`, `rho`, `opn4a`, `opn1lw2`, `opn1mw1` —
-seven opsins and a rhodopsin. There is no radiation in this experiment. These
-are the same photoreceptor genes that drive "response to light stimulus", and
-they are annotated to a radiation term because light is electromagnetic
-radiation.
+carried by `opn1sw1`, `opn1sw2`, `opn1lw2`, `opn1mw1`, `opn4a`, `rho`, `rhol`
+and `bbc3` — five cone opsins, two rhodopsins and one other gene. There was no
+radiation in this experiment. Seven of the eight are the same photoreceptor genes
+that drive "response to light stimulus", annotated here because light *is*
+electromagnetic radiation.
+
+The eighth, `bbc3`, is PUMA, and it genuinely is a DNA-damage response gene. One
+gene out of eight, arriving with seven that do not belong, is not evidence of
+anything. Noticing that it is the only honest member of the set is exactly the
+kind of reading this section is asking for.
 
 So the rule, which is worth more than any of the code above:
 

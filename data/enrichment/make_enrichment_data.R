@@ -37,8 +37,11 @@ message("== 1. gene lists ==")
 res <- read_tsv(RES, show_col_types = FALSE)
 de  <- res %>% filter(!is.na(padj), padj < PADJ_MAX, abs(log2FoldChange) > LFC_MIN)
 
-genes_up   <- sort(de$gene[de$log2FoldChange > 0])
-genes_down <- sort(de$gene[de$log2FoldChange < 0])
+# method = "radix" sorts by byte value, independently of the machine's locale.
+# Plain sort() collates differently under C and en_US.UTF-8, so regenerating
+# these files elsewhere would produce a whole-file diff and nothing else.
+genes_up   <- sort(de$gene[de$log2FoldChange > 0], method = "radix")
+genes_down <- sort(de$gene[de$log2FoldChange < 0], method = "radix")
 
 writeLines(genes_up,   file.path(OUT, "genes_up.txt"))
 writeLines(genes_down, file.path(OUT, "genes_down.txt"))
@@ -76,12 +79,28 @@ enrichr_submit <- function(genes, base) {
   jsonlite::fromJSON(content(r, "text", encoding = "UTF-8"))$userListId
 }
 
+# Enrichr and BioMart both answer a bad request, a maintenance page or a captive
+# portal with HTTP 200 and an HTML body, so the status code alone proves nothing.
+# Check that the columns we rely on actually arrived.
+require_columns <- function(tb, needed, what) {
+  missing <- setdiff(needed, names(tb))
+  if (length(missing)) {
+    stop(sprintf("%s did not return %s (got: %s)",
+                 what, paste(missing, collapse = ", "),
+                 paste(utils::head(names(tb), 4), collapse = ", ")),
+         call. = FALSE)
+  }
+  tb
+}
+
 enrichr_table <- function(list_id, library, base) {
   url <- sprintf("%s/export?userListId=%s&filename=x&backgroundType=%s",
                  base, list_id, library)
   r <- GET(url)
   stop_for_status(r)
-  read_tsv(content(r, "text", encoding = "UTF-8"), show_col_types = FALSE)
+  tb <- read_tsv(content(r, "text", encoding = "UTF-8"), show_col_types = FALSE)
+  require_columns(tb, c("Term", "Overlap", "Adjusted P-value", "Genes"),
+                  paste("Enrichr", library))
 }
 
 enrich <- function(genes, library, base, outfile) {
@@ -143,7 +162,15 @@ orthologs_rest <- function() {
   r <- GET("https://useast.ensembl.org/biomart/martservice",
            query = list(query = query))
   stop_for_status(r)
-  read_tsv(content(r, "text", encoding = "UTF-8"), show_col_types = FALSE)
+  txt <- content(r, "text", encoding = "UTF-8")
+  if (grepl("Query ERROR|<html", txt, ignore.case = TRUE)) {
+    stop("BioMart returned an error page, not a table", call. = FALSE)
+  }
+  tb <- read_tsv(txt, show_col_types = FALSE)
+  if (ncol(tb) != 4) {
+    stop(sprintf("BioMart returned %d columns, expected 4", ncol(tb)), call. = FALSE)
+  }
+  tb
 }
 
 orth_raw <- tryCatch({
@@ -163,7 +190,11 @@ orth <- orth_raw %>%
   distinct() %>%
   filter(zfish_symbol %in% res$gene) %>%          # only genes this experiment measured
   group_by(zfish_symbol) %>%
-  mutate(n_human_partners = n()) %>%
+  # n_distinct, not n(): distinct() above dedupes on all four columns, so the
+  # same (fish, human) pair reported twice with different confidence survives as
+  # two rows. Counting rows would then mark an unambiguous gene as ambiguous and
+  # silently drop it -- exactly the failure S7 section 4 teaches against.
+  mutate(n_human_partners = n_distinct(human_symbol)) %>%
   ungroup() %>%
   arrange(zfish_symbol, human_symbol)
 
@@ -179,7 +210,8 @@ message("   ", nrow(orth), " pairs for ", n_distinct(orth$zfish_symbol), " zebra
 # wrong: the teleost genome duplication means serpinh1b and col1a1a are both
 # labelled one2many even though each maps to exactly one human gene (SERPINH1,
 # COL1A1). The "many" is on the fish side. Using the label would silently throw
-# away serpinh1b, the single most strongly induced gene in this experiment.
+# away serpinh1b, which has the third smallest adjusted p-value of the 354
+# up-regulated genes.
 #
 # Many fish genes mapping onto the same human gene (col1a1a and col1a1b both
 # give COL1A1) is harmless here: we take unique human symbols, so a gene set can
@@ -187,7 +219,8 @@ message("   ", nrow(orth), " pairs for ", n_distinct(orth$zfish_symbol), " zebra
 unambiguous <- orth %>% filter(n_human_partners == 1)
 
 to_human <- function(fish_genes, table) {
-  sort(unique(table$human_symbol[table$zfish_symbol %in% fish_genes]))
+  sort(unique(table$human_symbol[table$zfish_symbol %in% fish_genes]),
+       method = "radix")
 }
 
 human_up   <- to_human(genes_up,   unambiguous)

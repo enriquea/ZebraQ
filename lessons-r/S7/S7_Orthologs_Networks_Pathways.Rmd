@@ -145,14 +145,24 @@ maps to exactly one human gene, `SERPINH1`. The label says "many" because
 The ambiguity is on the zebrafish side. We are travelling from zebrafish to
 human, so it does not affect us.
 
-This matters because `serpinh1b` is the most strongly induced gene in the whole
-experiment:
+This matters because `serpinh1b` is one of the most convincing genes in the
+whole experiment — not the largest fold change, but the third smallest adjusted
+p-value of the 354, on a high baseline:
 
 ```{r serpinh1b, echo = TRUE}
 
+up_ranked = de %>% filter(log2FoldChange > 0) %>% arrange(padj)
+
 res %>% filter(gene == "serpinh1b") %>% select(gene, baseMean, log2FoldChange, padj)
 
+# where it sits among the up-regulated genes
+which(up_ranked$gene == "serpinh1b")
+
 ```
+
+Note the distinction, because it recurs. The biggest fold changes in this
+experiment belong to genes like `nkd2b` at +21, measured off almost nothing.
+`serpinh1b` moves less and means more.
 
 A strict `ortholog_one2one` filter would silently delete it, along with
 `col1a1a`, `col1a1b`, `col2a1a`, `ankrd1b` and every other gene the teleost
@@ -197,29 +207,35 @@ writeLines(human_down, "outputs/genes_down_human.txt")
 ```
 
 Submit these to **Enrichr** (the human site, <https://maayanlab.cloud/Enrichr/>)
-against **GO Biological Process 2025**, exactly as in S6. Or read the committed
-results:
+against **GO Biological Process 2025**, exactly as in S6. Save the up-list export
+as `outputs/human_GO_up.txt` and the down-list one as `outputs/human_GO_down.txt`.
+Or read the committed results:
 
 ```{r read human enrichment, echo = TRUE}
 
 read_enrichment = function(mine, committed) {
   path = if (file.exists(mine)) mine else committed
+  message("reading: ", path)
   read_tsv(path, show_col_types = FALSE)
 }
 
-human_up_go = read_enrichment("outputs/GO_Biological_Process_2025_table.txt",
+# Rename each Enrichr download as you save it, for the reason given in S6.
+human_up_go = read_enrichment("outputs/human_GO_up.txt",
                               "../../data/enrichment/human_GO_BP_2025_up.tsv")
 
 human_up_go %>%
   filter(`Adjusted P-value` < 0.05) %>%
-  select(Term, Overlap, `Adjusted P-value`, Genes)
+  select(Term, Overlap, `Adjusted P-value`, Genes) %>%
+  as.data.frame()
 
 ```
 
 In zebrafish these genes enriched in nothing. In human they carry the
-**unfolded protein response**: `HSPA5` is BiP, the master sensor of endoplasmic
-reticulum stress, and `PDIA4`, `PDIA6`, `HSP90B1` and `HYOU1` are all ER folding
-machinery.
+**unfolded protein response**. Read the `Genes` column, as S6 insisted:
+`DNAJA1`, `HSPA2`, `HSPA4`, `HSP90AA1` and `HSPB1` are chaperones — proteins
+whose job is folding other proteins — and the sixth is `SERPINH1`.
+
+Hold on to `SERPINH1`. Section 10 comes back to it.
 
 And this came from *fewer* genes — 131 human symbols out of 354 zebrafish ones.
 The limitation was never the statistics. It was how much had been written down.
@@ -234,13 +250,27 @@ zebrafish. If the mapping is trustworthy, it should give the same answer again.
 
 ```{r human down, echo = TRUE}
 
-human_down_go = read_enrichment("outputs/GO_Biological_Process_2025_table_down.txt",
+human_down_go = read_enrichment("outputs/human_GO_down.txt",
                                 "../../data/enrichment/human_GO_BP_2025_down.tsv")
 
 human_down_go %>%
   filter(`Adjusted P-value` < 0.05) %>%
   select(Term, Overlap, `Adjusted P-value`) %>%
-  head(8)
+  head(8) %>%
+  as.data.frame()
+
+```
+
+```{r human down ecm genes, echo = TRUE}
+
+# The genes behind the extracellular matrix term, for section 8.
+ecm_genes = human_down_go %>%
+  filter(grepl("^Extracellular Matrix Organization", Term)) %>%
+  pull(Genes) %>%
+  strsplit(";") %>%
+  unlist()
+
+ecm_genes
 
 ```
 
@@ -337,9 +367,15 @@ upr = lapply(vintages, function(year) {
                 show_col_types = FALSE)
   row = tb %>% filter(grepl("unfolded protein", Term, ignore.case = TRUE)) %>%
         arrange(`Adjusted P-value`) %>% head(1)
-  data.frame(release = year,
-             overlap = row$Overlap,
-             padj    = signif(row$`Adjusted P-value`, 2))
+  # If a release spells the term differently there is no row at all, and
+  # data.frame() would stop the whole document rather than say so.
+  if (nrow(row) == 0) {
+    data.frame(release = year, overlap = NA_character_, padj = NA_real_)
+  } else {
+    data.frame(release = year,
+               overlap = row$Overlap,
+               padj    = signif(row$`Adjusted P-value`, 2))
+  }
 })
 
 do.call(rbind, upr)
@@ -391,8 +427,17 @@ hubs
 
 ```
 
-**Question.** Compare the hub list with the genes behind the top GO term in
-section 5. Do the two methods agree? Should they?
+**Question.** Compare the hub list with `ecm_genes` from section 5 — the genes
+behind "Extracellular Matrix Organization" in the same down-regulated list.
+
+```{r hubs vs ecm, echo = TRUE}
+
+intersect(names(hubs), ecm_genes)
+
+```
+
+Do the two methods agree? Should they? A hub is a protein with many partners; an
+enriched gene is one of many sharing a label. Those are different claims.
 
 
 ## 9. Pathways: Reactome

@@ -2019,8 +2019,8 @@ cwc22	CWC22	ortholog_one2one	1	1
 cwc25	CWC25	ortholog_one2one	1	1
 cwc27	CWC27	ortholog_one2one	1	1
 cwf19l1	CWF19L1	ortholog_one2one	1	1
-cwf19l2	CWF19L2	ortholog_one2many	1	2
-cwf19l2	CWF19L2	ortholog_one2many	0	2
+cwf19l2	CWF19L2	ortholog_one2many	1	1
+cwf19l2	CWF19L2	ortholog_one2many	0	1
 cxadr	CXADR	ortholog_one2many	1	1
 cxcl12a	CXCL12	ortholog_one2many	1	1
 cxcl12b	CXCL12	ortholog_one2many	0	1

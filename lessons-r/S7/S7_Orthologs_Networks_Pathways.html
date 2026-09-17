@@ -504,13 +504,24 @@ at <code>n_human_partners</code>: it is <strong>1</strong>.
 <code>serpinh1a</code> and <code>serpinh1b</code>.</p>
 <p>The ambiguity is on the zebrafish side. We are travelling from
 zebrafish to human, so it does not affect us.</p>
-<p>This matters because <code>serpinh1b</code> is the most strongly
-induced gene in the whole experiment:</p>
-<pre class="r"><code>res %&gt;% filter(gene == &quot;serpinh1b&quot;) %&gt;% select(gene, baseMean, log2FoldChange, padj)</code></pre>
+<p>This matters because <code>serpinh1b</code> is one of the most
+convincing genes in the whole experiment — not the largest fold change,
+but the third smallest adjusted p-value of the 354, on a high
+baseline:</p>
+<pre class="r"><code>up_ranked = de %&gt;% filter(log2FoldChange &gt; 0) %&gt;% arrange(padj)
+
+res %&gt;% filter(gene == &quot;serpinh1b&quot;) %&gt;% select(gene, baseMean, log2FoldChange, padj)</code></pre>
 <pre><code>## # A tibble: 1 x 4
 ##   gene      baseMean log2FoldChange      padj
 ##   &lt;chr&gt;        &lt;dbl&gt;          &lt;dbl&gt;     &lt;dbl&gt;
 ## 1 serpinh1b    8260.           3.72 1.21e-112</code></pre>
+<pre class="r"><code># where it sits among the up-regulated genes
+which(up_ranked$gene == &quot;serpinh1b&quot;)</code></pre>
+<pre><code>## [1] 3</code></pre>
+<p>Note the distinction, because it recurs. The biggest fold changes in
+this experiment belong to genes like <code>nkd2b</code> at +21, measured
+off almost nothing. <code>serpinh1b</code> moves less and means
+more.</p>
 <p>A strict <code>ortholog_one2one</code> filter would silently delete
 it, along with <code>col1a1a</code>, <code>col1a1b</code>,
 <code>col2a1a</code>, <code>ankrd1b</code> and every other gene the
@@ -547,29 +558,37 @@ inflate.</p>
 writeLines(human_up,   &quot;outputs/genes_up_human.txt&quot;)
 writeLines(human_down, &quot;outputs/genes_down_human.txt&quot;)</code></pre>
 <p>Submit these to <strong>Enrichr</strong> (the human site, <a href="https://maayanlab.cloud/Enrichr/" class="uri">https://maayanlab.cloud/Enrichr/</a>) against <strong>GO
-Biological Process 2025</strong>, exactly as in S6. Or read the
-committed results:</p>
+Biological Process 2025</strong>, exactly as in S6. Save the up-list
+export as <code>outputs/human_GO_up.txt</code> and the down-list one as
+<code>outputs/human_GO_down.txt</code>. Or read the committed
+results:</p>
 <pre class="r"><code>read_enrichment = function(mine, committed) {
   path = if (file.exists(mine)) mine else committed
+  message(&quot;reading: &quot;, path)
   read_tsv(path, show_col_types = FALSE)
 }
 
-human_up_go = read_enrichment(&quot;outputs/GO_Biological_Process_2025_table.txt&quot;,
-                              &quot;../../data/enrichment/human_GO_BP_2025_up.tsv&quot;)
-
-human_up_go %&gt;%
+# Rename each Enrichr download as you save it, for the reason given in S6.
+human_up_go = read_enrichment(&quot;outputs/human_GO_up.txt&quot;,
+                              &quot;../../data/enrichment/human_GO_BP_2025_up.tsv&quot;)</code></pre>
+<pre><code>## reading: ../../data/enrichment/human_GO_BP_2025_up.tsv</code></pre>
+<pre class="r"><code>human_up_go %&gt;%
   filter(`Adjusted P-value` &lt; 0.05) %&gt;%
-  select(Term, Overlap, `Adjusted P-value`, Genes)</code></pre>
-<pre><code>## # A tibble: 2 x 4
-##   Term                                      Overlap `Adjusted P-value` Genes    
-##   &lt;chr&gt;                                     &lt;chr&gt;                &lt;dbl&gt; &lt;chr&gt;    
-## 1 Response to Unfolded Protein (GO:0006986) 6/44              0.000419 DNAJA1;H~
-## 2 Platelet Aggregation (GO:0070527)         4/35              0.0407   FIBP;HSP~</code></pre>
+  select(Term, Overlap, `Adjusted P-value`, Genes) %&gt;%
+  as.data.frame()</code></pre>
+<pre><code>##                                        Term Overlap Adjusted P-value
+## 1 Response to Unfolded Protein (GO:0006986)    6/44     0.0004187902
+## 2         Platelet Aggregation (GO:0070527)    4/35     0.0406531392
+##                                        Genes
+## 1 DNAJA1;HSP90AA1;HSPA4;SERPINH1;HSPB1;HSPA2
+## 2                      FIBP;HSPB1;GATA1;MYL9</code></pre>
 <p>In zebrafish these genes enriched in nothing. In human they carry the
-<strong>unfolded protein response</strong>: <code>HSPA5</code> is BiP,
-the master sensor of endoplasmic reticulum stress, and
-<code>PDIA4</code>, <code>PDIA6</code>, <code>HSP90B1</code> and
-<code>HYOU1</code> are all ER folding machinery.</p>
+<strong>unfolded protein response</strong>. Read the <code>Genes</code>
+column, as S6 insisted: <code>DNAJA1</code>, <code>HSPA2</code>,
+<code>HSPA4</code>, <code>HSP90AA1</code> and <code>HSPB1</code> are
+chaperones — proteins whose job is folding other proteins — and the
+sixth is <code>SERPINH1</code>.</p>
+<p>Hold on to <code>SERPINH1</code>. Section 10 comes back to it.</p>
 <p>And this came from <em>fewer</em> genes — 131 human symbols out of
 354 zebrafish ones. The limitation was never the statistics. It was how
 much had been written down.</p>
@@ -580,24 +599,43 @@ The transformation might have created it.</p>
 <p>The test is the down-regulated list, which already had a clear answer
 in zebrafish. If the mapping is trustworthy, it should give the same
 answer again.</p>
-<pre class="r"><code>human_down_go = read_enrichment(&quot;outputs/GO_Biological_Process_2025_table_down.txt&quot;,
-                                &quot;../../data/enrichment/human_GO_BP_2025_down.tsv&quot;)
-
-human_down_go %&gt;%
+<pre class="r"><code>human_down_go = read_enrichment(&quot;outputs/human_GO_down.txt&quot;,
+                                &quot;../../data/enrichment/human_GO_BP_2025_down.tsv&quot;)</code></pre>
+<pre><code>## reading: ../../data/enrichment/human_GO_BP_2025_down.tsv</code></pre>
+<pre class="r"><code>human_down_go %&gt;%
   filter(`Adjusted P-value` &lt; 0.05) %&gt;%
   select(Term, Overlap, `Adjusted P-value`) %&gt;%
-  head(8)</code></pre>
-<pre><code>## # A tibble: 8 x 3
-##   Term                                                  Overlap `Adjusted P-va~`
-##   &lt;chr&gt;                                                 &lt;chr&gt;              &lt;dbl&gt;
-## 1 Metal Ion Transport (GO:0030001)                      17/180         0.0000146
-## 2 Skeletal System Development (GO:0001501)              15/160         0.0000618
-## 3 Extracellular Matrix Organization (GO:0030198)        15/182         0.000223 
-## 4 Modulation of Chemical Synaptic Transmission (GO:005~ 12/117         0.000233 
-## 5 Collagen Fibril Organization (GO:0030199)             8/45           0.000233 
-## 6 External Encapsulating Structure Organization (GO:00~ 11/111         0.000588 
-## 7 Extracellular Structure Organization (GO:0043062)     11/111         0.000588 
-## 8 Regulation of Carbohydrate Metabolic Process (GO:000~ 5/15           0.000713</code></pre>
+  head(8) %&gt;%
+  as.data.frame()</code></pre>
+<pre><code>##                                                         Term Overlap
+## 1                           Metal Ion Transport (GO:0030001)  17/180
+## 2                   Skeletal System Development (GO:0001501)  15/160
+## 3             Extracellular Matrix Organization (GO:0030198)  15/182
+## 4  Modulation of Chemical Synaptic Transmission (GO:0050804)  12/117
+## 5                  Collagen Fibril Organization (GO:0030199)    8/45
+## 6 External Encapsulating Structure Organization (GO:0045229)  11/111
+## 7          Extracellular Structure Organization (GO:0043062)  11/111
+## 8  Regulation of Carbohydrate Metabolic Process (GO:0006109)    5/15
+##   Adjusted P-value
+## 1     1.456821e-05
+## 2     6.175617e-05
+## 3     2.234010e-04
+## 4     2.325818e-04
+## 5     2.325818e-04
+## 6     5.880282e-04
+## 7     5.880282e-04
+## 8     7.128748e-04</code></pre>
+<pre class="r"><code># The genes behind the extracellular matrix term, for section 8.
+ecm_genes = human_down_go %&gt;%
+  filter(grepl(&quot;^Extracellular Matrix Organization&quot;, Term)) %&gt;%
+  pull(Genes) %&gt;%
+  strsplit(&quot;;&quot;) %&gt;%
+  unlist()
+
+ecm_genes</code></pre>
+<pre><code>##  [1] &quot;COL11A1&quot; &quot;COL11A2&quot; &quot;LOXL3&quot;   &quot;COL1A1&quot;  &quot;ADAMTS5&quot; &quot;COL1A2&quot;  &quot;COL2A1&quot; 
+##  [8] &quot;P4HA1&quot;   &quot;COL5A2&quot;  &quot;COL8A2&quot;  &quot;COL9A1&quot;  &quot;MATN1&quot;   &quot;COL10A1&quot; &quot;COL9A2&quot; 
+## [15] &quot;MATN3&quot;</code></pre>
 <p>Extracellular matrix organisation and collagen fibril organisation,
 as before. The mapping reproduces what we already knew, so the new
 finding in the up-list is more believable.</p>
@@ -696,9 +734,15 @@ since have evaporated.</p>
                 show_col_types = FALSE)
   row = tb %&gt;% filter(grepl(&quot;unfolded protein&quot;, Term, ignore.case = TRUE)) %&gt;%
         arrange(`Adjusted P-value`) %&gt;% head(1)
-  data.frame(release = year,
-             overlap = row$Overlap,
-             padj    = signif(row$`Adjusted P-value`, 2))
+  # If a release spells the term differently there is no row at all, and
+  # data.frame() would stop the whole document rather than say so.
+  if (nrow(row) == 0) {
+    data.frame(release = year, overlap = NA_character_, padj = NA_real_)
+  } else {
+    data.frame(release = year,
+               overlap = row$Overlap,
+               padj    = signif(row$`Adjusted P-value`, 2))
+  }
 })
 
 do.call(rbind, upr)</code></pre>
@@ -755,8 +799,14 @@ hubs</code></pre>
 ##      27      22      22      21      21      21      20      19      19      18 
 ##  GUCA1B    MYL2 
 ##      18      17</code></pre>
-<p><strong>Question.</strong> Compare the hub list with the genes behind
-the top GO term in section 5. Do the two methods agree? Should they?</p>
+<p><strong>Question.</strong> Compare the hub list with
+<code>ecm_genes</code> from section 5 — the genes behind “Extracellular
+Matrix Organization” in the same down-regulated list.</p>
+<pre class="r"><code>intersect(names(hubs), ecm_genes)</code></pre>
+<pre><code>## [1] &quot;COL1A1&quot;  &quot;COL1A2&quot;  &quot;COL2A1&quot;  &quot;COL11A1&quot; &quot;COL10A1&quot;</code></pre>
+<p>Do the two methods agree? Should they? A hub is a protein with many
+partners; an enriched gene is one of many sharing a label. Those are
+different claims.</p>
 </div>
 <div id="pathways-reactome" class="section level2">
 <h2>9. Pathways: Reactome</h2>

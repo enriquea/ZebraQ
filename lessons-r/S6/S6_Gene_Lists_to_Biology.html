@@ -409,8 +409,10 @@ length(genes_up)</code></pre>
 <pre class="r"><code>length(genes_down)</code></pre>
 <pre><code>## [1] 588</code></pre>
 <p>Notice that these cutoffs are <strong>not</strong> the ones the
-volcano plot used in S5 (<code>padj &lt; 0.001</code>,
-<code>|log2FC| &gt; 2.5</code>, which keep only 48 and 55 genes).</p>
+volcano plot used in S5. That plot passed <code>y = &#39;pvalue&#39;</code>, so
+it highlighted genes with a raw <code>pvalue &lt; 0.001</code> and
+<code>|log2FC| &gt; 2.5</code> — 55 up and 56 down, 111 points in
+all.</p>
 <p>That was not an inconsistency. The volcano’s cutoffs exist so the
 gene labels stay readable on a crowded figure. Choosing genes for
 enrichment is a different job, and it gets its own decision. Be
@@ -506,9 +508,14 @@ into the box</li>
 results</li>
 <li>Use <strong>Export entries to table</strong> to download the
 table</li>
-<li>Save it into this lesson’s <code>outputs/</code> folder</li>
+<li>Save it into this lesson’s <code>outputs/</code> folder, renaming it
+to <strong><code>fish_GO_down.txt</code></strong></li>
 </ol>
-<p>Then do the same for <code>outputs/genes_up.txt</code>.</p>
+<p>Then do the same for <code>outputs/genes_up.txt</code>, saving that
+one as <strong><code>fish_GO_up.txt</code></strong>.</p>
+<p>The rename matters: Enrichr gives both downloads the same default
+filename, so without it the second one overwrites the first and the
+chunks below silently read the wrong list.</p>
 </div>
 <div id="or-run-it-from-r" class="section level3">
 <h3>Or run it from R</h3>
@@ -536,7 +543,7 @@ read_enrichment = function(mine, committed) {
   read_tsv(path, show_col_types = FALSE)
 }
 
-fish_down = read_enrichment(&quot;outputs/GO_Biological_Process_2018_table.txt&quot;,
+fish_down = read_enrichment(&quot;outputs/fish_GO_down.txt&quot;,
                             &quot;../../data/enrichment/fish_GO_BP_2018_down.tsv&quot;)</code></pre>
 <pre><code>## reading: ../../data/enrichment/fish_GO_BP_2018_down.tsv</code></pre>
 <pre class="r"><code># One row per GO term tested.
@@ -560,7 +567,7 @@ sig_down %&gt;% select(Term, Overlap, `Adjusted P-value`)</code></pre>
 ## 4 notochord morphogenesis (GO:0048570)           6/15              5.77e- 4
 ## 5 cellular response to radiation (GO:0071478)    8/47              1.12e- 2</code></pre>
 <p>Five terms out of 918 tested. Now the up-regulated genes:</p>
-<pre class="r"><code>fish_up = read_enrichment(&quot;outputs/GO_Biological_Process_2018_table_up.txt&quot;,
+<pre class="r"><code>fish_up = read_enrichment(&quot;outputs/fish_GO_up.txt&quot;,
                           &quot;../../data/enrichment/fish_GO_BP_2018_up.tsv&quot;)</code></pre>
 <pre><code>## reading: ../../data/enrichment/fish_GO_BP_2018_up.tsv</code></pre>
 <pre class="r"><code>sum(fish_up$`Adjusted P-value` &lt; 0.05)</code></pre>
@@ -618,22 +625,31 @@ evidence, and it takes ten seconds to read.</p>
 ## 5                                                                                                                        opn1sw1;opn1sw2;rhol;rho;opn4a;opn1lw2;opn1mw1;bbc3</code></pre>
 <p>Look at those five rows carefully before reading on.</p>
 <p>Three things should bother you.</p>
-<p><strong>The top term is one gene family.</strong> All 21 genes behind
-“extracellular matrix organization” are collagens, plus one collagen
-cross-linking enzyme. That is a real and coherent finding, but it is one
-story, not 21 independent ones.</p>
-<p><strong>Three terms are the same genes wearing different
-hats.</strong> “Notochord morphogenesis” and “skeletal system
-development” are driven by the same collagens as the term above them.
-Ranked lists make these look like three findings. They are one.</p>
+<p><strong>The top term is mostly one gene family.</strong> Nineteen of
+the 21 genes behind “extracellular matrix organization” are collagens.
+The other two are <code>loxl3a</code>, a collagen cross-linking enzyme,
+and <code>zgc:113232</code>, an unnamed clone identifier. That is a real
+and coherent finding, but it is largely one story about collagen, not 21
+independent ones.</p>
+<p><strong>Other terms re-use those same collagens.</strong> “Notochord
+morphogenesis” shares 3 of its 6 genes with the term above it, and
+“skeletal system development” shares 7 of its 18. So they are not
+independent confirmations — but they are not pure duplicates either.
+Count the shared genes before deciding how much a second term adds; the
+ranked list will not do it for you.</p>
 <p><strong>One term is not about what it says.</strong> “Cellular
 response to radiation” is carried by <code>opn1sw1</code>,
-<code>opn1sw2</code>, <code>rhol</code>, <code>rho</code>,
-<code>opn4a</code>, <code>opn1lw2</code>, <code>opn1mw1</code> — seven
-opsins and a rhodopsin. There is no radiation in this experiment. These
-are the same photoreceptor genes that drive “response to light
-stimulus”, and they are annotated to a radiation term because light is
-electromagnetic radiation.</p>
+<code>opn1sw2</code>, <code>opn1lw2</code>, <code>opn1mw1</code>,
+<code>opn4a</code>, <code>rho</code>, <code>rhol</code> and
+<code>bbc3</code> — five cone opsins, two rhodopsins and one other gene.
+There was no radiation in this experiment. Seven of the eight are the
+same photoreceptor genes that drive “response to light stimulus”,
+annotated here because light <em>is</em> electromagnetic radiation.</p>
+<p>The eighth, <code>bbc3</code>, is PUMA, and it genuinely is a
+DNA-damage response gene. One gene out of eight, arriving with seven
+that do not belong, is not evidence of anything. Noticing that it is the
+only honest member of the set is exactly the kind of reading this
+section is asking for.</p>
 <p>So the rule, which is worth more than any of the code above:</p>
 <blockquote>
 <p><strong>Never report a GO term before reading the genes that produced
