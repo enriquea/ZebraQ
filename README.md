@@ -5,8 +5,9 @@
 An introductory course for beginners in programming and RNA-seq data analysis,
 built for biotechnology students with little or no bioinformatics background.
 
-The course is available in **two parallel tracks: R and Python**. They cover the
-same material, use the same datasets, and reach the same biological conclusions.
+The course is available in **two parallel tracks: R and Python**. S1-S5 and the
+S8 bonus exist in both, use the same datasets, and reach the same biological
+conclusions. S6 and S7 are currently R only; the Python port is pending.
 Which one is taught depends on the cohort; pick whichever suits you.
 
 For more advanced users we recommend the

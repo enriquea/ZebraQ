@@ -221,7 +221,7 @@ def build_s6():
     answer(p, "Five cone opsins, two rhodopsins — and one honest gene.",
            "Light is electromagnetic radiation, so photoreceptor genes get annotated\n"
            "to a radiation term. The statistics are correct; the label misleads.\n"
-           "The same seven drive 'response to light stimulus' — one finding, counted twice.\n\n"
+           "The seven also sit in 'response to light stimulus', mixed with clock genes.\n\n"
            "The eighth, bbc3, is PUMA, and it really is a DNA-damage gene.\n"
            "One out of eight, arriving with seven that do not belong, is not evidence.")
 
@@ -331,7 +331,7 @@ def build_s7():
                 "Identical genes. Identical code.\nWhich conclusion do you trust?")
     hint(p, "Which term appears in all four rows?",
             "IRE1-mediated UPR was significant in 2021 and is gone by 2025",
-            "Bone mineralization appears in 2023, vanishes, returns in 2026")
+            "Bone mineralization: significant in 2021 and 2023, gone in 2025, back in 2026")
     answer(p, "The one that survives every release.",
            "Response to unfolded protein is significant in all four, even though the\n"
            "size of the GO term itself changes from 49 genes to 44 to 45.\n\n"

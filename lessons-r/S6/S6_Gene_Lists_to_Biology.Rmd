@@ -224,15 +224,19 @@ plot_data = sig_down %>%
     n_genes   = as.numeric(sub("/.*", "", Overlap)),
     term_size = as.numeric(sub(".*/", "", Overlap)),
     ratio     = n_genes / term_size,
+    # p-values span eight orders of magnitude; on a linear colour ramp every
+    # strong term would get the same colour and only the weakest would stand out.
+    neg_log10_padj = -log10(`Adjusted P-value`),
     Term      = sub(" \\(GO:.*", "", Term)          # drop the GO id for the label
   )
 
 ggplot(plot_data, aes(x = ratio, y = reorder(Term, ratio))) +
-  geom_point(aes(size = n_genes, colour = `Adjusted P-value`)) +
-  scale_colour_gradient(low = "#b2182b", high = "#2166ac") +
+  geom_point(aes(size = n_genes, colour = neg_log10_padj)) +
+  scale_colour_gradient(low = "#92c5de", high = "#b2182b") +
   labs(x = "fraction of the GO term found in our list",
        y = NULL,
        size = "genes",
+       colour = "-log10(padj)",
        title = "Down-regulated genes, GO Biological Process (zebrafish, 2018)") +
   theme_bw()
 
@@ -276,9 +280,11 @@ adds; the ranked list will not do it for you.
 **One term is not about what it says.** "Cellular response to radiation" is
 carried by `opn1sw1`, `opn1sw2`, `opn1lw2`, `opn1mw1`, `opn4a`, `rho`, `rhol`
 and `bbc3` — five cone opsins, two rhodopsins and one other gene. There was no
-radiation in this experiment. Seven of the eight are the same photoreceptor genes
-that drive "response to light stimulus", annotated here because light *is*
-electromagnetic radiation.
+radiation in this experiment. The seven photoreceptor genes are annotated here
+because light *is* electromagnetic radiation. They also sit inside "response to
+light stimulus" — but that term has 14 genes, and five of the others are clock
+genes (`per1a`, `per2`, `per3`, `cry5`, `npas2`). So "response to light
+stimulus" mixes two separate problems that section 9 pulls apart.
 
 The eighth, `bbc3`, is PUMA, and it genuinely is a DNA-damage response gene. One
 gene out of eight, arriving with seven that do not belong, is not evidence of
