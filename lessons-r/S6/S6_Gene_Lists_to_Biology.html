@@ -604,15 +604,19 @@ dim(fish_down)</code></pre>
   filter(`Adjusted P-value` &lt; 0.05) %&gt;%
   arrange(`Adjusted P-value`)
 
-sig_down %&gt;% select(Term, Overlap, `Adjusted P-value`)</code></pre>
+# Format for display only, three significant figures in scientific notation.
+# Rounding to decimal places would turn 1.8e-10 into 0.
+sig_down %&gt;%
+  select(Term, Overlap, `Adjusted P-value`) %&gt;%
+  mutate(`Adjusted P-value` = formatC(`Adjusted P-value`, format = &quot;e&quot;, digits = 2))</code></pre>
 <pre><code>## # A tibble: 5 x 3
 ##   Term                                           Overlap `Adjusted P-value`
-##   &lt;chr&gt;                                          &lt;chr&gt;                &lt;dbl&gt;
-## 1 extracellular matrix organization (GO:0030198) 21/92             1.80e-10
-## 2 response to light stimulus (GO:0009416)        14/84             4.52e- 5
-## 3 skeletal system development (GO:0001501)       18/137            4.52e- 5
-## 4 notochord morphogenesis (GO:0048570)           6/15              5.77e- 4
-## 5 cellular response to radiation (GO:0071478)    8/47              1.12e- 2</code></pre>
+##   &lt;chr&gt;                                          &lt;chr&gt;   &lt;chr&gt;             
+## 1 extracellular matrix organization (GO:0030198) 21/92   1.80e-10          
+## 2 response to light stimulus (GO:0009416)        14/84   4.52e-05          
+## 3 skeletal system development (GO:0001501)       18/137  4.52e-05          
+## 4 notochord morphogenesis (GO:0048570)           6/15    5.77e-04          
+## 5 cellular response to radiation (GO:0071478)    8/47    1.12e-02</code></pre>
 <p>Five of the 918 terms tested are significant. The same analysis for
 the up-regulated genes:</p>
 <pre class="r"><code>fish_up = read_enrichment(&quot;outputs/fish_GO_up.txt&quot;,

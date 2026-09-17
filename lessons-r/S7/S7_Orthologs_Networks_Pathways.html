@@ -598,10 +598,11 @@ human_up_go = read_enrichment(&quot;outputs/human_GO_up.txt&quot;,
 <pre class="r"><code>human_up_go %&gt;%
   filter(`Adjusted P-value` &lt; 0.05) %&gt;%
   select(Term, Overlap, `Adjusted P-value`, Genes) %&gt;%
+  mutate(`Adjusted P-value` = formatC(`Adjusted P-value`, format = &quot;e&quot;, digits = 2)) %&gt;%
   as.data.frame()</code></pre>
 <pre><code>##                                        Term Overlap Adjusted P-value
-## 1 Response to Unfolded Protein (GO:0006986)    6/44     0.0004187902
-## 2         Platelet Aggregation (GO:0070527)    4/35     0.0406531392
+## 1 Response to Unfolded Protein (GO:0006986)    6/44         4.19e-04
+## 2         Platelet Aggregation (GO:0070527)    4/35         4.07e-02
 ##                                        Genes
 ## 1 DNAJA1;HSP90AA1;HSPA4;SERPINH1;HSPB1;HSPA2
 ## 2                      FIBP;HSPB1;GATA1;MYL9</code></pre>
@@ -625,6 +626,7 @@ after mapping, it should give a similar result.</p>
   filter(`Adjusted P-value` &lt; 0.05) %&gt;%
   select(Term, Overlap, `Adjusted P-value`) %&gt;%
   head(8) %&gt;%
+  mutate(`Adjusted P-value` = formatC(`Adjusted P-value`, format = &quot;e&quot;, digits = 2)) %&gt;%
   as.data.frame()</code></pre>
 <pre><code>##                                                         Term Overlap
 ## 1                           Metal Ion Transport (GO:0030001)  17/180
@@ -636,14 +638,14 @@ after mapping, it should give a similar result.</p>
 ## 7          Extracellular Structure Organization (GO:0043062)  11/111
 ## 8  Regulation of Carbohydrate Metabolic Process (GO:0006109)    5/15
 ##   Adjusted P-value
-## 1     1.456821e-05
-## 2     6.175617e-05
-## 3     2.234010e-04
-## 4     2.325818e-04
-## 5     2.325818e-04
-## 6     5.880282e-04
-## 7     5.880282e-04
-## 8     7.128748e-04</code></pre>
+## 1         1.46e-05
+## 2         6.18e-05
+## 3         2.23e-04
+## 4         2.33e-04
+## 5         2.33e-04
+## 6         5.88e-04
+## 7         5.88e-04
+## 8         7.13e-04</code></pre>
 <pre class="r"><code># Genes in the extracellular matrix term, used again in section 8.
 # Require exactly one significant match: GO term names change between releases
 # (the 2021 library does not use this capitalisation), and a non-significant
@@ -679,15 +681,16 @@ those where one zebrafish gene maps to several human genes.</p>
 all_up_go %&gt;%
   filter(`Adjusted P-value` &lt; 0.05) %&gt;%
   select(Term, Overlap, `Adjusted P-value`) %&gt;%
-  head(5)</code></pre>
+  head(5) %&gt;%
+  mutate(`Adjusted P-value` = formatC(`Adjusted P-value`, format = &quot;e&quot;, digits = 2))</code></pre>
 <pre><code>## # A tibble: 5 x 3
 ##   Term                                          Overlap `Adjusted P-value`
-##   &lt;chr&gt;                                         &lt;chr&gt;                &lt;dbl&gt;
-## 1 Cellular Response to Zinc Ion (GO:0071294)    13/17             1.82e-19
-## 2 Response to Cadmium Ion (GO:0046686)          12/16             6.19e-18
-## 3 Cellular Response to Cadmium Ion (GO:0071276) 12/17             1.04e-17
-## 4 Cellular Response to Copper Ion (GO:0071280)  12/17             1.04e-17
-## 5 Response to Copper Ion (GO:0046688)           12/21             3.80e-16</code></pre>
+##   &lt;chr&gt;                                         &lt;chr&gt;   &lt;chr&gt;             
+## 1 Cellular Response to Zinc Ion (GO:0071294)    13/17   1.82e-19          
+## 2 Response to Cadmium Ion (GO:0046686)          12/16   6.19e-18          
+## 3 Cellular Response to Cadmium Ion (GO:0071276) 12/17   1.04e-17          
+## 4 Cellular Response to Copper Ion (GO:0071280)  12/17   1.04e-17          
+## 5 Response to Copper Ion (GO:0046688)           12/21   3.80e-16</code></pre>
 <pre class="r"><code># how many terms are significant here, against 2 with the filter applied
 sum(all_up_go$`Adjusted P-value` &lt; 0.05)</code></pre>
 <pre><code>## [1] 60</code></pre>
@@ -749,16 +752,16 @@ summary_table = lapply(vintages, function(year) {
     # A release with no significant term would otherwise show as NA, which reads
     # like a formatting problem rather than a result.
     top_term     = if (nrow(sig) == 0) &quot;none significant&quot; else sub(&quot; \\(GO:.*&quot;, &quot;&quot;, sig$Term[1]),
-    top_padj     = if (nrow(sig) == 0) NA_real_ else signif(sig$`Adjusted P-value`[1], 2)
+    top_padj     = if (nrow(sig) == 0) NA_character_ else formatC(sig$`Adjusted P-value`[1], format = &quot;e&quot;, digits = 2)
   )
 })
 
 do.call(rbind, summary_table)</code></pre>
 <pre><code>##   release terms_tested significant                     top_term top_padj
-## 1    2021         1264          18 response to unfolded protein  3.8e-05
-## 2    2023         1044          10 Response To Unfolded Protein  4.2e-04
-## 3    2025         1034           2 Response to Unfolded Protein  4.2e-04
-## 4    2026         1129          11 Response to Unfolded Protein  5.2e-04</code></pre>
+## 1    2021         1264          18 response to unfolded protein 3.80e-05
+## 2    2023         1044          10 Response To Unfolded Protein 4.23e-04
+## 3    2025         1034           2 Response to Unfolded Protein 4.19e-04
+## 4    2026         1129          11 Response to Unfolded Protein 5.25e-04</code></pre>
 <p>With the same input, the number of significant terms is 18 in 2021,
 10 in 2023, 2 in 2025 and 11 in 2026. The “response to unfolded protein”
 term in each release:</p>
@@ -770,20 +773,20 @@ term in each release:</p>
   # If a release names the term differently there is no matching row;
   # return NA instead of stopping the document.
   if (nrow(row) == 0) {
-    data.frame(release = year, overlap = NA_character_, padj = NA_real_)
+    data.frame(release = year, overlap = NA_character_, padj = NA_character_)
   } else {
     data.frame(release = year,
                overlap = row$Overlap,
-               padj    = signif(row$`Adjusted P-value`, 2))
+               padj    = formatC(row$`Adjusted P-value`, format = &quot;e&quot;, digits = 2))
   }
 })
 
 do.call(rbind, upr)</code></pre>
-<pre><code>##   release overlap    padj
-## 1    2021    7/49 3.8e-05
-## 2    2023    6/44 4.2e-04
-## 3    2025    6/44 4.2e-04
-## 4    2026    6/45 5.2e-04</code></pre>
+<pre><code>##   release overlap     padj
+## 1    2021    7/49 3.80e-05
+## 2    2023    6/44 4.23e-04
+## 3    2025    6/44 4.19e-04
+## 4    2026    6/45 5.25e-04</code></pre>
 <p>“Response to unfolded protein” is significant in all four releases,
 although the number of genes annotated to the term changes between them.
 Most other terms are significant in only some releases.</p>
@@ -849,20 +852,21 @@ different criteria.</p>
 reactome %&gt;%
   filter(`Adjusted P-value` &lt; 0.05) %&gt;%
   select(Term, Overlap, `Adjusted P-value`) %&gt;%
-  head(10)</code></pre>
+  head(10) %&gt;%
+  mutate(`Adjusted P-value` = formatC(`Adjusted P-value`, format = &quot;e&quot;, digits = 2))</code></pre>
 <pre><code>## # A tibble: 10 x 3
 ##    Term                                                 Overlap `Adjusted P-va~`
-##    &lt;chr&gt;                                                &lt;chr&gt;              &lt;dbl&gt;
-##  1 Assembly of Collagen Fibrils and Other Multimeric S~ 13/61       0.0000000121
-##  2 Collagen Formation                                   14/90       0.0000000870
-##  3 Collagen Biosynthesis and Modifying Enzymes          12/67       0.000000210 
-##  4 Collagen Chain Trimerization                         10/44       0.000000352 
-##  5 Extracellular Matrix Organization                    22/300      0.000000847 
-##  6 Collagen Degradation                                 11/64       0.000000847 
-##  7 MET Activates PTK2 Signaling                         7/30        0.0000394   
-##  8 ECM Proteoglycans                                    10/76       0.0000394   
-##  9 Non-integrin membrane-ECM Interactions               9/59        0.0000394   
-## 10 Degradation of the Extracellular Matrix              13/140      0.0000413</code></pre>
+##    &lt;chr&gt;                                                &lt;chr&gt;   &lt;chr&gt;           
+##  1 Assembly of Collagen Fibrils and Other Multimeric S~ 13/61   1.21e-08        
+##  2 Collagen Formation                                   14/90   8.70e-08        
+##  3 Collagen Biosynthesis and Modifying Enzymes          12/67   2.10e-07        
+##  4 Collagen Chain Trimerization                         10/44   3.52e-07        
+##  5 Extracellular Matrix Organization                    22/300  8.47e-07        
+##  6 Collagen Degradation                                 11/64   8.47e-07        
+##  7 MET Activates PTK2 Signaling                         7/30    3.94e-05        
+##  8 ECM Proteoglycans                                    10/76   3.94e-05        
+##  9 Non-integrin membrane-ECM Interactions               9/59    3.94e-05        
+## 10 Degradation of the Extracellular Matrix              13/140  4.13e-05</code></pre>
 <p><strong>Question.</strong> Where do the Reactome and GO results
 agree, and which results appear in only one of them?</p>
 </div>

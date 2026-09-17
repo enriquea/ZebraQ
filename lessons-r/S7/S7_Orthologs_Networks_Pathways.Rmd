@@ -254,6 +254,7 @@ human_up_go = read_enrichment("outputs/human_GO_up.txt",
 human_up_go %>%
   filter(`Adjusted P-value` < 0.05) %>%
   select(Term, Overlap, `Adjusted P-value`, Genes) %>%
+  mutate(`Adjusted P-value` = formatC(`Adjusted P-value`, format = "e", digits = 2)) %>%
   as.data.frame()
 
 ```
@@ -281,6 +282,7 @@ human_down_go %>%
   filter(`Adjusted P-value` < 0.05) %>%
   select(Term, Overlap, `Adjusted P-value`) %>%
   head(8) %>%
+  mutate(`Adjusted P-value` = formatC(`Adjusted P-value`, format = "e", digits = 2)) %>%
   as.data.frame()
 
 ```
@@ -325,7 +327,8 @@ all_up_go = read_tsv("../../data/enrichment/human_GO_BP_2025_up_ALLORTHO.tsv",
 all_up_go %>%
   filter(`Adjusted P-value` < 0.05) %>%
   select(Term, Overlap, `Adjusted P-value`) %>%
-  head(5)
+  head(5) %>%
+  mutate(`Adjusted P-value` = formatC(`Adjusted P-value`, format = "e", digits = 2))
 
 # how many terms are significant here, against 2 with the filter applied
 sum(all_up_go$`Adjusted P-value` < 0.05)
@@ -386,7 +389,7 @@ summary_table = lapply(vintages, function(year) {
     # A release with no significant term would otherwise show as NA, which reads
     # like a formatting problem rather than a result.
     top_term     = if (nrow(sig) == 0) "none significant" else sub(" \\(GO:.*", "", sig$Term[1]),
-    top_padj     = if (nrow(sig) == 0) NA_real_ else signif(sig$`Adjusted P-value`[1], 2)
+    top_padj     = if (nrow(sig) == 0) NA_character_ else formatC(sig$`Adjusted P-value`[1], format = "e", digits = 2)
   )
 })
 
@@ -407,11 +410,11 @@ upr = lapply(vintages, function(year) {
   # If a release names the term differently there is no matching row;
   # return NA instead of stopping the document.
   if (nrow(row) == 0) {
-    data.frame(release = year, overlap = NA_character_, padj = NA_real_)
+    data.frame(release = year, overlap = NA_character_, padj = NA_character_)
   } else {
     data.frame(release = year,
                overlap = row$Overlap,
-               padj    = signif(row$`Adjusted P-value`, 2))
+               padj    = formatC(row$`Adjusted P-value`, format = "e", digits = 2))
   }
 })
 
@@ -490,7 +493,8 @@ reactome = read_tsv("../../data/enrichment/human_Reactome_2024_down.tsv",
 reactome %>%
   filter(`Adjusted P-value` < 0.05) %>%
   select(Term, Overlap, `Adjusted P-value`) %>%
-  head(10)
+  head(10) %>%
+  mutate(`Adjusted P-value` = formatC(`Adjusted P-value`, format = "e", digits = 2))
 
 ```
 

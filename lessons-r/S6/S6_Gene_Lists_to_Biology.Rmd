@@ -240,7 +240,11 @@ sig_down = fish_down %>%
   filter(`Adjusted P-value` < 0.05) %>%
   arrange(`Adjusted P-value`)
 
-sig_down %>% select(Term, Overlap, `Adjusted P-value`)
+# Format for display only, three significant figures in scientific notation.
+# Rounding to decimal places would turn 1.8e-10 into 0.
+sig_down %>%
+  select(Term, Overlap, `Adjusted P-value`) %>%
+  mutate(`Adjusted P-value` = formatC(`Adjusted P-value`, format = "e", digits = 2))
 
 ```
 
