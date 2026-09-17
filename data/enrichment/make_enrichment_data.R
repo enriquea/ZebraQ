@@ -123,8 +123,12 @@ enrich(genes_down, "KEGG_2019",                  FISH, "fish_KEGG_2019_down.tsv"
 # certificate has expired".
 #
 # The fallback requests the same four attributes from the BioMart REST service
-# with httr (HTTPS). The useast.ensembl.org mirror is used because
-# www.ensembl.org responds to this URL with a 308 redirect.
+# with httr (HTTPS), bypassing biomaRt.
+#
+# Ensembl moves this endpoint. www.ensembl.org answers with a 308 redirect to a
+# dated archive host (jun2026.archive.ensembl.org at the time of writing), and
+# the regional mirrors have started returning 403 for it. So rather than naming
+# a host, read the redirect to find the current one and fall back to a list.
 # ---------------------------------------------------------------------------
 
 message("== 3. orthologs ==")
@@ -140,6 +144,31 @@ orthologs_biomart <- function() {
     mart = mart)
 }
 
+# Ensembl has begun rejecting requests that carry libcurl's default user agent:
+# the regional mirrors answer those with HTTP 403 and the same request with a
+# browser user agent with HTTP 200. Sending one is therefore not cosmetic here.
+BIOMART_UA <- user_agent(
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36")
+
+# Hosts to try, in order. www.ensembl.org currently redirects this endpoint to a
+# dated archive host, so ask it where it is pointing and try that first; the
+# archive name changes with each Ensembl release, which is why it is discovered
+# rather than hard-coded.
+biomart_hosts <- function() {
+  redirected <- tryCatch({
+    r <- GET("https://www.ensembl.org/biomart/martservice",
+             query = list(type = "registry", requestid = "biomaRt"),
+             BIOMART_UA, config(followlocation = FALSE))
+    loc <- headers(r)[["location"]]
+    if (is.null(loc)) NULL else sub("^(https?://[^/]+).*$", "\\1", loc)
+  }, error = function(e) NULL)
+
+  unique(c(redirected,
+           "https://useast.ensembl.org",
+           "https://asia.ensembl.org",
+           "https://www.ensembl.org"))
+}
+
 orthologs_rest <- function() {
   query <- paste0(
     '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE Query>',
@@ -151,18 +180,30 @@ orthologs_rest <- function() {
     '<Attribute name="hsapiens_homolog_orthology_type"/>',
     '<Attribute name="hsapiens_homolog_orthology_confidence"/>',
     '</Dataset></Query>')
-  r <- GET("https://useast.ensembl.org/biomart/martservice",
-           query = list(query = query))
-  stop_for_status(r)
-  txt <- content(r, "text", encoding = "UTF-8")
-  if (grepl("Query ERROR|<html", txt, ignore.case = TRUE)) {
-    stop("BioMart returned an error page, not a table", call. = FALSE)
+  for (host in biomart_hosts()) {
+    tb <- tryCatch({
+      r <- GET(paste0(host, "/biomart/martservice"), query = list(query = query),
+               BIOMART_UA)
+      stop_for_status(r)
+      txt <- content(r, "text", encoding = "UTF-8")
+      if (grepl("Query ERROR|<html|\\{\"status_code\"", txt, ignore.case = TRUE)) {
+        stop("error page, not a table", call. = FALSE)
+      }
+      out <- read_tsv(txt, show_col_types = FALSE)
+      if (ncol(out) != 4) {
+        stop(sprintf("returned %d columns, expected 4", ncol(out)), call. = FALSE)
+      }
+      out
+    }, error = function(e) {
+      message("   ", host, ": ", conditionMessage(e))
+      NULL
+    })
+    if (!is.null(tb)) {
+      message("   using ", host)
+      return(tb)
+    }
   }
-  tb <- read_tsv(txt, show_col_types = FALSE)
-  if (ncol(tb) != 4) {
-    stop(sprintf("BioMart returned %d columns, expected 4", ncol(tb)), call. = FALSE)
-  }
-  tb
+  stop("no Ensembl BioMart host answered with a table", call. = FALSE)
 }
 
 orth_raw <- tryCatch({
