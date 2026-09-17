@@ -126,6 +126,28 @@ chunks that talk to live services; the lessons themselves read committed copies 
 down. `httr` and `jsonlite` are needed only to regenerate those copies with
 `data/enrichment/make_enrichment_data.R`.
 
+## If a lesson cannot reach a service
+
+The lessons in Part 3 query Enrichr, Ensembl and STRING. These are public
+services that change without notice, and two failures are common enough to name.
+
+**`biomaRt` in S7 stops with `Not Found (HTTP 404)`.** Ensembl has moved the
+BioMart endpoint: `www.ensembl.org` now redirects it to a dated archive host,
+and older `biomaRt` versions do not follow the redirect. This is not a problem
+with your installation, and it is not something you did. Nothing in the lesson
+depends on it: the chunk is not evaluated when the lesson is knitted, and the
+ortholog table is read from `data/enrichment/`. S7 also shows the same query as
+a plain web request, which does still work.
+
+**Enrichr replies with `HTTP 429 Too Many Requests`.** The service limits how
+often it will accept submissions, and a class submitting at once will reach that
+limit. Wait a few seconds and try again, or continue with the stored results.
+
+In general, every step in S6 and S7 that contacts a service has a copy of its
+result stored in `data/enrichment/`, and the lessons fall back to it
+automatically. A service being down delays the exercise; it does not stop the
+lesson.
+
 ```{r verify}
 # Check what you ended up with at any point:
 for (p in c("tidyverse", "ggplot2", "ggpubr", "dplyr", "RColorBrewer", "readxl",

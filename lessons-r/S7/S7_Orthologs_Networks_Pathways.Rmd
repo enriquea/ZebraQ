@@ -96,7 +96,10 @@ while preparing this course:
   machine's certificate store rather than from Ensembl.
 - `Error in bmRequest(...) : Not Found (HTTP 404)`, because `www.ensembl.org`
   now answers this endpoint with a redirect to a dated archive host that older
-  `biomaRt` versions do not follow.
+  `biomaRt` versions do not follow. On `biomaRt` 2.50 (the version that pairs
+  with R 4.1) there is no way round this from inside the package: naming a
+  mirror or an archive host gets past the first call, but `getBM()` then fails
+  as well. R 4.6, which this course is pinned to, ships a much newer `biomaRt`.
 
 Neither is a mistake on your part. This is the usual cost of depending on a live
 service, and the reason the ortholog table is stored in the repository.
