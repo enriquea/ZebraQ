@@ -3,16 +3,14 @@
 #
 # Regenerates every file in data/enrichment/.
 #
-# The S6 and S7 lessons ask students to fetch these results themselves, from
-# FishEnrichr, Ensembl and STRING. Those are live services: they go down, they
-# time out, and university networks block them. The files this script writes are
-# the committed copies the lessons fall back on so that a failed download never
-# stops the class.
+# The S6 and S7 lessons retrieve these results from FishEnrichr, Enrichr,
+# Ensembl and STRING. Because these services are not always reachable, the
+# lessons fall back to the copies written by this script.
 #
 # Run from the project root:   Rscript data/enrichment/make_enrichment_data.R
 #
 # Needs dplyr, readr, httr and jsonlite (biomaRt is optional: it is tried first
-# and skipped if missing). Kept deliberately plain; it is meant to be read.
+# and skipped if missing).
 # ---------------------------------------------------------------------------
 
 suppressPackageStartupMessages({
@@ -27,9 +25,8 @@ dir.create(OUT, showWarnings = FALSE, recursive = TRUE)
 
 RES <- "results/DESeq2_results.tsv"
 
-# Thresholds used throughout S6 and S7. Deliberately NOT the volcano cutoffs
-# from S5 (padj < 0.001, |lfc| > 2.5): those exist to keep the plot labels
-# readable, which is a different job from choosing genes for enrichment.
+# Thresholds used in S6 and S7. These differ from the volcano plot cutoffs in S5
+# (pvalue < 0.001, |lfc| > 2.5), which only control the labelled points.
 PADJ_MAX <- 0.05
 LFC_MIN  <- 1
 
@@ -38,9 +35,8 @@ message("== 1. gene lists ==")
 res <- read_tsv(RES, show_col_types = FALSE)
 de  <- res %>% filter(!is.na(padj), padj < PADJ_MAX, abs(log2FoldChange) > LFC_MIN)
 
-# method = "radix" sorts by byte value, independently of the machine's locale.
-# Plain sort() collates differently under C and en_US.UTF-8, so regenerating
-# these files elsewhere would produce a whole-file diff and nothing else.
+# method = "radix" sorts independently of the locale, so the output files are
+# identical when regenerated on another machine.
 genes_up   <- sort(de$gene[de$log2FoldChange > 0], method = "radix")
 genes_down <- sort(de$gene[de$log2FoldChange < 0], method = "radix")
 
@@ -52,13 +48,10 @@ message("   up: ", length(genes_up), "   down: ", length(genes_down))
 # Enrichr / FishEnrichr
 #
 # Two calls: POST the gene list, then GET the results table for one library.
-# FishEnrichr and Enrichr are the same software on different URLs, so one pair
-# of functions serves both.
+# FishEnrichr and Enrichr share the same API, so these functions serve both.
 # ---------------------------------------------------------------------------
 
-# Enrichr rate-limits. A whole classroom submitting at once will meet HTTP 429,
-# and so will this script if it runs its calls back to back. Retry with a
-# widening pause rather than falling over.
+# Enrichr limits the request rate (HTTP 429). Retry with an increasing pause.
 with_retry <- function(fn, tries = 5, wait = 3) {
   for (i in seq_len(tries)) {
     r <- tryCatch(fn(), error = function(e) e)
@@ -80,9 +73,8 @@ enrichr_submit <- function(genes, base) {
   jsonlite::fromJSON(content(r, "text", encoding = "UTF-8"))$userListId
 }
 
-# Enrichr and BioMart both answer a bad request, a maintenance page or a captive
-# portal with HTTP 200 and an HTML body, so the status code alone proves nothing.
-# Check that the columns we rely on actually arrived.
+# A service can return HTTP 200 with an error page instead of a table, so check
+# that the expected columns are present.
 require_columns <- function(tb, needed, what) {
   missing <- setdiff(needed, names(tb))
   if (length(missing)) {
@@ -126,17 +118,13 @@ enrich(genes_down, "KEGG_2019",                  FISH, "fish_KEGG_2019_down.tsv"
 # ---------------------------------------------------------------------------
 # Orthologs
 #
-# biomaRt is what the S7 lesson teaches, so it is what we try first. It depends
-# on a live Ensembl connection and on the machine's TLS certificates being
-# current, and it does fail: during course development it died with
-# "SSL certificate problem: certificate has expired" on R 4.1.3.
+# biomaRt (used in S7) is tried first. It requires a connection to Ensembl and
+# valid SSL certificates, and failed on R 4.1.3 with "SSL certificate problem:
+# certificate has expired".
 #
-# The fallback asks the same Ensembl BioMart for the same four attributes
-# through its REST web service with httr, bypassing biomaRt. It is still HTTPS;
-# what differs is the client, and on the development machine httr's certificate
-# store worked where biomaRt's connection did not. Note the mirror:
-# www.ensembl.org answers this URL with a 308 redirect, useast.ensembl.org
-# answers it with data.
+# The fallback requests the same four attributes from the BioMart REST service
+# with httr (HTTPS). The useast.ensembl.org mirror is used because
+# www.ensembl.org responds to this URL with a 308 redirect.
 # ---------------------------------------------------------------------------
 
 message("== 3. orthologs ==")
@@ -194,10 +182,8 @@ orth <- orth_raw %>%
   distinct() %>%
   filter(zfish_symbol %in% res$gene) %>%          # only genes this experiment measured
   group_by(zfish_symbol) %>%
-  # n_distinct, not n(): distinct() above dedupes on all four columns, so the
-  # same (fish, human) pair reported twice with different confidence survives as
-  # two rows. Counting rows would then mark an unambiguous gene as ambiguous and
-  # silently drop it -- exactly the failure S7 section 4 teaches against.
+  # n_distinct rather than n(): the same (fish, human) pair can appear twice
+  # with different confidence values, which would otherwise count as two.
   mutate(n_human_partners = n_distinct(human_symbol)) %>%
   ungroup() %>%
   arrange(zfish_symbol, human_symbol)
@@ -207,19 +193,14 @@ message("   ", nrow(orth), " pairs for ", n_distinct(orth$zfish_symbol), " zebra
 
 # The filter the lessons use.
 #
-# "1:1" has to mean "unambiguous in the direction we are travelling": one
-# zebrafish gene, one human gene. That is n_human_partners == 1.
+# Keep zebrafish genes with exactly one human ortholog (n_human_partners == 1).
 #
-# Ensembl's own `ortholog_one2one` label is stricter and, for a zebrafish study,
-# wrong: the teleost genome duplication means serpinh1b and col1a1a are both
-# labelled one2many even though each maps to exactly one human gene (SERPINH1,
-# COL1A1). The "many" is on the fish side. Using the label would silently throw
-# away serpinh1b, which has the third smallest adjusted p-value of the 354
-# up-regulated genes.
+# Ensembl's `ortholog_one2one` label is not used: because of the teleost genome
+# duplication, genes such as serpinh1b and col1a1a are labelled one2many although
+# each maps to a single human gene (SERPINH1, COL1A1).
 #
-# Many fish genes mapping onto the same human gene (col1a1a and col1a1b both
-# give COL1A1) is harmless here: we take unique human symbols, so a gene set can
-# only shrink, never inflate.
+# Several zebrafish genes may map to the same human gene; only unique human
+# symbols are kept, so this cannot inflate a gene set.
 unambiguous <- orth %>% filter(n_human_partners == 1)
 
 to_human <- function(fish_genes, table) {
@@ -234,9 +215,8 @@ writeLines(human_up,   file.path(OUT, "genes_up_human.txt"))
 writeLines(human_down, file.path(OUT, "genes_down_human.txt"))
 message("   unambiguous -> human:  up ", length(human_up), "   down ", length(human_down))
 
-# The counter-example for the S7 appraisal exercise: every ortholog, no filter.
-# One zebrafish gene, mt2, carries 12 human metallothioneins into the list on
-# its own, and manufactures a "cellular response to zinc ion" hit at 1e-19.
+# Unfiltered mapping, used in S7 section 6 for comparison. Here one zebrafish
+# gene, mt2, maps to 12 human metallothioneins.
 human_up_all <- to_human(genes_up, orth)
 writeLines(human_up_all, file.path(OUT, "genes_up_human_ALLORTHO.txt"))
 message("   unfiltered  -> human:  up ", length(human_up_all), " (for the artifact demo)")
@@ -257,8 +237,7 @@ for (year in c("2021", "2023", "2026")) {
 # ---------------------------------------------------------------------------
 # STRING
 #
-# One GET returns the network edges among the submitted genes. The lesson uses
-# the website for the picture and this table for the numbers.
+# One GET returns the interactions among the submitted genes.
 # ---------------------------------------------------------------------------
 
 message("== 6. STRING network ==")

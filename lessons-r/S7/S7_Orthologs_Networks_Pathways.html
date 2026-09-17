@@ -357,17 +357,16 @@ display: none;
 </div>
 
 
-<p>S6 ended on a failure. Three hundred and fifty-four genes go up,
-strongly and significantly, and they enrich in nothing at all.</p>
-<p>This lesson asks whether those genes are really uninformative, or
-whether we were simply asking a database that does not know very
-much.</p>
+<p>In S6, the 354 up-regulated genes showed no significant enrichment in
+the zebrafish GO library. This lesson maps the zebrafish genes to human
+orthologs, repeats the enrichment with human annotation, and introduces
+network (STRING) and pathway (Reactome) analysis.</p>
 <div id="load-libraries" class="section level2">
 <h2>1. Load libraries</h2>
 <pre class="r"><code>library(dplyr, quietly = TRUE)
 library(readr, quietly = TRUE)
 library(ggplot2, quietly = TRUE)</code></pre>
-<pre class="r"><code># The same lists S6 built.
+<pre class="r"><code># The same lists built in S6.
 res = read_tsv(&quot;../../results/DESeq2_results.tsv&quot;, show_col_types = FALSE)
 
 de = res %&gt;% filter(!is.na(padj), padj &lt; 0.05, abs(log2FoldChange) &gt; 1)
@@ -375,29 +374,24 @@ de = res %&gt;% filter(!is.na(padj), padj &lt; 0.05, abs(log2FoldChange) &gt; 1)
 genes_up   = sort(de$gene[de$log2FoldChange &gt; 0])
 genes_down = sort(de$gene[de$log2FoldChange &lt; 0])</code></pre>
 </div>
-<div id="how-much-does-the-database-actually-know" class="section level2">
-<h2>2. How much does the database actually know?</h2>
-<p>FishEnrichr’s GO Biological Process library is dated
-<strong>2018</strong>. The human one is current. That is not an accident
-of this website: zebrafish annotation really is thinner and older than
-human annotation, because far more people have spent far more money
-studying human genes.</p>
-<p>So an alternative explanation for S6’s empty result is available.
-Perhaps the up-regulated genes do something specific, and nobody has
-written it down in zebrafish.</p>
-<p>We can test that. Most zebrafish genes have a human counterpart.</p>
+<div id="annotation-coverage" class="section level2">
+<h2>2. Annotation coverage</h2>
+<p>The GO Biological Process library in FishEnrichr dates from
+<strong>2018</strong>, while the human libraries in Enrichr are updated
+regularly. Zebrafish genes are also, in general, less extensively
+annotated than their human counterparts.</p>
+<p>A lack of enrichment can therefore have two explanations: the genes
+do not share a common function, or their function is not yet recorded in
+the zebrafish annotation. The second possibility can be tested by
+mapping the genes to human orthologs and repeating the analysis.</p>
 </div>
 <div id="orthologs" class="section level2">
 <h2>3. Orthologs</h2>
-<p>Two genes are <strong>orthologs</strong> if they descend from the
-same gene in the common ancestor of the two species. Ensembl computes
-these for every pair of species it hosts, and labels each
+<p>Two genes are <strong>orthologs</strong> if they descend from a
+single gene in the last common ancestor of the two species. Ensembl
+provides ortholog predictions between species and classifies each
 relationship:</p>
 <table>
-<colgroup>
-<col width="50%" />
-<col width="50%" />
-</colgroup>
 <thead>
 <tr>
 <th>Type</th>
@@ -411,21 +405,21 @@ relationship:</p>
 </tr>
 <tr>
 <td><code>ortholog_one2many</code></td>
-<td>the relationship is one-to-many in some direction</td>
+<td>one gene in one species, several in the other</td>
 </tr>
 <tr>
 <td><code>ortholog_many2many</code></td>
-<td>several genes on both sides</td>
+<td>several genes in both species</td>
 </tr>
 </tbody>
 </table>
-<p>Zebrafish is an awkward case. Its lineage went through an extra
-whole-genome duplication, so a single human gene frequently has two
-zebrafish copies, named <code>a</code> and <code>b</code>: human
+<p>The teleost lineage underwent an additional whole-genome duplication,
+so a single human gene often has two zebrafish copies, usually suffixed
+<code>a</code> and <code>b</code>. For example, human
 <code>COL1A1</code> corresponds to zebrafish <code>col1a1a</code> and
 <code>col1a1b</code>.</p>
-<div id="from-r" class="section level3">
-<h3>From R</h3>
+<div id="using-r" class="section level3">
+<h3>Using R</h3>
 <pre class="r"><code>library(biomaRt)
 
 mart = useEnsembl(&quot;genes&quot;, &quot;drerio_gene_ensembl&quot;)
@@ -438,31 +432,31 @@ orth = getBM(
   mart = mart)
 
 head(orth)</code></pre>
-<p>This chunk is not run when the lesson is knitted, and you may well
-find it fails when you run it. <code>biomaRt</code> needs a live
-connection to Ensembl and up-to-date certificates on your machine; while
-this course was being written it failed with
-<code>SSL certificate problem: certificate has expired</code>.</p>
-<p>That is ordinary. It is also why
-<code>data/enrichment/make_enrichment_data.R</code> carries a fallback
-that asks the same Ensembl for the same four columns through BioMart’s
-web service on the <code>useast.ensembl.org</code> mirror, without
-<code>biomaRt</code>, and why the table is committed to the
-repository.</p>
+<p>This chunk is not evaluated when the lesson is knitted.
+<code>biomaRt</code> requires a connection to Ensembl and valid SSL
+certificates on the local machine, and it can fail for either reason
+(for example with
+<code>SSL certificate problem: certificate has expired</code>).</p>
+<p>For this reason the ortholog table is stored in the repository. It
+was generated by <code>data/enrichment/make_enrichment_data.R</code>,
+which tries <code>biomaRt</code> first and otherwise queries the BioMart
+web service on the <code>useast.ensembl.org</code> mirror.</p>
 </div>
-<div id="from-the-browser" class="section level3">
-<h3>From the browser</h3>
-<p>The same query, by hand: <a href="https://www.ensembl.org/biomart/martview" class="uri">https://www.ensembl.org/biomart/martview</a></p>
+<div id="using-the-website" class="section level3">
+<h3>Using the website</h3>
+<p>The same query can be run at <a href="https://www.ensembl.org/biomart/martview" class="uri">https://www.ensembl.org/biomart/martview</a>:</p>
 <ul>
 <li><strong>Dataset</strong>: Ensembl Genes → Zebrafish genes</li>
-<li><strong>Attributes</strong>: uncheck the defaults, then under
-<em>Homologues</em> pick Gene name, Human gene name, Human homology
+<li><strong>Attributes</strong>: clear the defaults, then under
+<em>Homologues</em> select Gene name, Human gene name and Human homology
 type</li>
-<li><strong>Results</strong> → Export all results to TSV</li>
+<li><strong>Results</strong> → export all results to TSV</li>
 </ul>
+<p>The stored table additionally contains <code>n_human_partners</code>,
+computed by the generator script, which is used below.</p>
 </div>
-<div id="the-committed-table" class="section level3">
-<h3>The committed table</h3>
+<div id="load-the-stored-table" class="section level3">
+<h3>Load the stored table</h3>
 <pre class="r"><code>orth = read_tsv(&quot;../../data/enrichment/zfish_human_orthologs.tsv&quot;,
                 show_col_types = FALSE)
 
@@ -482,10 +476,11 @@ head(orth)</code></pre>
 <pre><code>## [1] 9734</code></pre>
 </div>
 </div>
-<div id="what-11-has-to-mean" class="section level2">
-<h2>4. What “1:1” has to mean</h2>
-<p>The obvious filter is Ensembl’s own label. It is also wrong here, and
-the reason is worth the five minutes.</p>
+<div id="choosing-an-ortholog-filter" class="section level2">
+<h2>4. Choosing an ortholog filter</h2>
+<p>A common choice is to keep only relationships labelled
+<code>ortholog_one2one</code>. For zebrafish, this label removes many
+genes that map unambiguously to human.</p>
 <pre class="r"><code>orth %&gt;%
   filter(zfish_symbol %in% c(&quot;serpinh1b&quot;, &quot;col1a1a&quot;, &quot;col1a1b&quot;, &quot;hspa5&quot;, &quot;col1a2&quot;)) %&gt;%
   select(zfish_symbol, human_symbol, orthology_type, n_human_partners)</code></pre>
@@ -497,19 +492,14 @@ the reason is worth the five minutes.</p>
 ## 3 col1a2       COL1A2       ortholog_one2one                 1
 ## 4 hspa5        HSPA5        ortholog_one2one                 1
 ## 5 serpinh1b    SERPINH1     ortholog_one2many                1</code></pre>
-<p><code>serpinh1b</code> is labelled <code>ortholog_one2many</code>, so
-a strict <code>ortholog_one2one</code> filter throws it away. But look
-at <code>n_human_partners</code>: it is <strong>1</strong>.
-<code>serpinh1b</code> maps to exactly one human gene,
-<code>SERPINH1</code>. The label says “many” because
-<em><code>SERPINH1</code> has two zebrafish partners</em>,
-<code>serpinh1a</code> and <code>serpinh1b</code>.</p>
-<p>The ambiguity is on the zebrafish side. We are travelling from
-zebrafish to human, so it does not affect us.</p>
-<p>This matters because <code>serpinh1b</code> is one of the most
-convincing genes in the whole experiment — not the largest fold change,
-but the third smallest adjusted p-value of the 354, on a high
-baseline:</p>
+<p><code>serpinh1b</code> is labelled <code>ortholog_one2many</code> but
+has <code>n_human_partners</code> equal to 1: it maps to a single human
+gene, <code>SERPINH1</code>. The “many” refers to the human side, where
+<code>SERPINH1</code> has two zebrafish orthologs
+(<code>serpinh1a</code> and <code>serpinh1b</code>). When mapping from
+zebrafish to human, this does not create ambiguity.</p>
+<p><code>serpinh1b</code> is also one of the most significant
+up-regulated genes:</p>
 <pre class="r"><code>up_ranked = de %&gt;% filter(log2FoldChange &gt; 0) %&gt;% arrange(padj)
 
 res %&gt;% filter(gene == &quot;serpinh1b&quot;) %&gt;% select(gene, baseMean, log2FoldChange, padj)</code></pre>
@@ -517,20 +507,15 @@ res %&gt;% filter(gene == &quot;serpinh1b&quot;) %&gt;% select(gene, baseMean, l
 ##   gene      baseMean log2FoldChange      padj
 ##   &lt;chr&gt;        &lt;dbl&gt;          &lt;dbl&gt;     &lt;dbl&gt;
 ## 1 serpinh1b    8260.           3.72 1.21e-112</code></pre>
-<pre class="r"><code># where it sits among the up-regulated genes
+<pre class="r"><code># rank among the up-regulated genes by adjusted p-value
 which(up_ranked$gene == &quot;serpinh1b&quot;)</code></pre>
 <pre><code>## [1] 3</code></pre>
-<p>Note the distinction, because it recurs. The biggest fold changes in
-this experiment belong to genes like <code>nkd2b</code> at +21, measured
-off almost nothing. <code>serpinh1b</code> moves less and means
-more.</p>
-<p>A strict <code>ortholog_one2one</code> filter would silently delete
-it, along with <code>col1a1a</code>, <code>col1a1b</code>,
-<code>col2a1a</code>, <code>ankrd1b</code> and every other gene the
-teleost duplication touched — which, in a zebrafish experiment, is a
-great many of the interesting ones.</p>
-<p>So the filter we want is “one zebrafish gene, one human gene”,
-expressed directly:</p>
+<p>A filter on <code>ortholog_one2one</code> would remove it, together
+with <code>col1a1a</code>, <code>col1a1b</code>, <code>col2a1a</code>,
+<code>ankrd1b</code> and other genes affected by the teleost
+duplication.</p>
+<p>This lesson therefore keeps zebrafish genes with exactly one human
+ortholog:</p>
 <pre class="r"><code>unambiguous = orth %&gt;% filter(n_human_partners == 1)
 
 to_human = function(fish_genes) {
@@ -546,31 +531,30 @@ length(genes_up);   length(human_up)</code></pre>
 <pre class="r"><code>length(genes_down); length(human_down)</code></pre>
 <pre><code>## [1] 588</code></pre>
 <pre><code>## [1] 329</code></pre>
-<p>Several zebrafish genes may still land on the same human gene —
-<code>col1a1a</code> and <code>col1a1b</code> both give
-<code>COL1A1</code>. That direction is safe: we take unique symbols, so
-a gene set can only shrink, never inflate.</p>
-<p>The next section shows what happens when it is allowed to
-inflate.</p>
+<p>Different zebrafish genes can map to the same human gene
+(<code>col1a1a</code> and <code>col1a1b</code> both map to
+<code>COL1A1</code>). Because only unique human symbols are kept, this
+can reduce the size of the list but cannot inflate it. Section 6 shows
+the effect of not applying the filter.</p>
 </div>
-<div id="what-the-mapping-finds" class="section level2">
-<h2>5. What the mapping finds</h2>
+<div id="enrichment-with-human-annotation" class="section level2">
+<h2>5. Enrichment with human annotation</h2>
 <pre class="r"><code>dir.create(&quot;outputs&quot;, showWarnings = FALSE)
 
 writeLines(human_up,   &quot;outputs/genes_up_human.txt&quot;)
 writeLines(human_down, &quot;outputs/genes_down_human.txt&quot;)</code></pre>
-<p>Submit these to <strong>Enrichr</strong> (the human site, <a href="https://maayanlab.cloud/Enrichr/" class="uri">https://maayanlab.cloud/Enrichr/</a>) against <strong>GO
-Biological Process 2025</strong>, exactly as in S6. Save the up-list
-export as <code>outputs/human_GO_up.txt</code> and the down-list one as
-<code>outputs/human_GO_down.txt</code>. Or read the committed
-results:</p>
+<p>Submit both lists to <strong>Enrichr</strong> (<a href="https://maayanlab.cloud/Enrichr/" class="uri">https://maayanlab.cloud/Enrichr/</a>) using <strong>GO
+Biological Process 2025</strong>, as in S6. Save the up-regulated result
+as <code>outputs/human_GO_up.txt</code> and the down-regulated result as
+<code>outputs/human_GO_down.txt</code>. If the files are not present,
+the stored copies are used.</p>
 <pre class="r"><code>read_enrichment = function(mine, committed) {
   path = if (file.exists(mine)) mine else committed
   message(&quot;reading: &quot;, path)
   read_tsv(path, show_col_types = FALSE)
 }
 
-# Rename each Enrichr download as you save it, for the reason given in S6.
+# Rename each Enrichr download when saving it (see S6, section 5).
 human_up_go = read_enrichment(&quot;outputs/human_GO_up.txt&quot;,
                               &quot;../../data/enrichment/human_GO_BP_2025_up.tsv&quot;)</code></pre>
 <pre><code>## reading: ../../data/enrichment/human_GO_BP_2025_up.tsv</code></pre>
@@ -584,23 +568,18 @@ human_up_go = read_enrichment(&quot;outputs/human_GO_up.txt&quot;,
 ##                                        Genes
 ## 1 DNAJA1;HSP90AA1;HSPA4;SERPINH1;HSPB1;HSPA2
 ## 2                      FIBP;HSPB1;GATA1;MYL9</code></pre>
-<p>In zebrafish these genes enriched in nothing. In human they carry the
-<strong>unfolded protein response</strong>. Read the <code>Genes</code>
-column, as S6 insisted: <code>DNAJA1</code>, <code>HSPA2</code>,
-<code>HSPA4</code>, <code>HSP90AA1</code> and <code>HSPB1</code> are
-chaperones — proteins whose job is folding other proteins — and the
-sixth is <code>SERPINH1</code>.</p>
-<p>Hold on to <code>SERPINH1</code>. Section 10 comes back to it.</p>
-<p>And this came from <em>fewer</em> genes — 131 human symbols out of
-354 zebrafish ones. The limitation was never the statistics. It was how
-much had been written down.</p>
-<div id="the-control" class="section level3">
-<h3>The control</h3>
-<p>A result that appears only after a transformation deserves suspicion.
-The transformation might have created it.</p>
-<p>The test is the down-regulated list, which already had a clear answer
-in zebrafish. If the mapping is trustworthy, it should give the same
-answer again.</p>
+<p>With human annotation, the up-regulated list is enriched for
+<strong>response to unfolded protein</strong>. The genes in this term
+are <code>DNAJA1</code>, <code>HSPA2</code>, <code>HSPA4</code>,
+<code>HSP90AA1</code> and <code>HSPB1</code>, which are molecular
+chaperones, and <code>SERPINH1</code>. This result was obtained from 131
+human genes, fewer than the 354 zebrafish genes tested in S6.</p>
+<div id="checking-the-mapping-with-the-down-regulated-list" class="section level3">
+<h3>Checking the mapping with the down-regulated list</h3>
+<p>A result that appears only after a transformation of the data should
+be checked against a case where the expected outcome is known. The
+down-regulated list was already enriched in the zebrafish analysis;
+after mapping, it should give a similar result.</p>
 <pre class="r"><code>human_down_go = read_enrichment(&quot;outputs/human_GO_down.txt&quot;,
                                 &quot;../../data/enrichment/human_GO_BP_2025_down.tsv&quot;)</code></pre>
 <pre><code>## reading: ../../data/enrichment/human_GO_BP_2025_down.tsv</code></pre>
@@ -627,7 +606,7 @@ answer again.</p>
 ## 6     5.880282e-04
 ## 7     5.880282e-04
 ## 8     7.128748e-04</code></pre>
-<pre class="r"><code># The genes behind the extracellular matrix term, for section 8.
+<pre class="r"><code># Genes in the extracellular matrix term, used again in section 8.
 ecm_genes = human_down_go %&gt;%
   filter(grepl(&quot;^Extracellular Matrix Organization&quot;, Term)) %&gt;%
   pull(Genes) %&gt;%
@@ -638,18 +617,16 @@ ecm_genes</code></pre>
 <pre><code>##  [1] &quot;COL11A1&quot; &quot;COL11A2&quot; &quot;LOXL3&quot;   &quot;COL1A1&quot;  &quot;ADAMTS5&quot; &quot;COL1A2&quot;  &quot;COL2A1&quot; 
 ##  [8] &quot;P4HA1&quot;   &quot;COL5A2&quot;  &quot;COL8A2&quot;  &quot;COL9A1&quot;  &quot;MATN1&quot;   &quot;COL10A1&quot; &quot;COL9A2&quot; 
 ## [15] &quot;MATN3&quot;</code></pre>
-<p>Extracellular matrix organisation and collagen fibril organisation,
-as before. The mapping reproduces what we already knew, so the new
-finding in the up-list is more believable.</p>
-<p>Notice also what the richer annotation adds:
-<code>Metal Ion Transport</code> and
-<code>Modulation of Chemical Synaptic Transmission</code> were invisible
-in the 2018 zebrafish library.</p>
+<p>The human analysis again returns extracellular matrix and collagen
+fibril organization, consistent with the zebrafish result. It also
+returns terms that were not significant with the 2018 zebrafish library,
+such as <code>Metal Ion Transport</code>.</p>
 </div>
 </div>
-<div id="what-happens-without-the-filter" class="section level2">
-<h2>6. What happens without the filter</h2>
-<p>Suppose we had kept every ortholog, ambiguous ones included.</p>
+<div id="effect-of-not-filtering-orthologs" class="section level2">
+<h2>6. Effect of not filtering orthologs</h2>
+<p>The following result was obtained by keeping all orthologs, including
+those where one zebrafish gene maps to several human genes.</p>
 <pre class="r"><code>all_up_go = read_tsv(&quot;../../data/enrichment/human_GO_BP_2025_up_ALLORTHO.tsv&quot;,
                      show_col_types = FALSE)
 
@@ -665,10 +642,9 @@ all_up_go %&gt;%
 ## 3 Cellular Response to Cadmium Ion (GO:0071276) 12/17             1.04e-17
 ## 4 Cellular Response to Copper Ion (GO:0071280)  12/17             1.04e-17
 ## 5 Response to Copper Ion (GO:0046688)           12/21             3.80e-16</code></pre>
-<p><code>Cellular Response to Zinc Ion</code> at an adjusted p-value of
-about 1.8e-19. Sixty significant terms instead of two. A spectacular
-result.</p>
-<p>It is also entirely fabricated. Look at the genes:</p>
+<p>The top term is <code>Cellular Response to Zinc Ion</code> (adjusted
+p-value about 1.8e-19), and 60 terms are significant instead of 2. The
+genes behind the top term:</p>
 <pre class="r"><code>all_up_go$Genes[1]</code></pre>
 <pre><code>## [1] &quot;MT1M;MT1X;MT4;MT3;MT2A;MT1A;P2RX4;MT1F;MT1G;MT1H;MT1B;MT1E;MT1HL1&quot;</code></pre>
 <pre class="r"><code>orth %&gt;% filter(zfish_symbol == &quot;mt2&quot;) %&gt;% select(zfish_symbol, human_symbol, orthology_type)</code></pre>
@@ -687,24 +663,19 @@ result.</p>
 ## 10 mt2          MT2A         ortholog_one2many
 ## 11 mt2          MT3          ortholog_one2many
 ## 12 mt2          MT4          ortholog_one2many</code></pre>
-<p>Twelve of those thirteen genes are human metallothioneins, and every
-one of them entered the list through a <strong>single</strong> zebrafish
-gene, <code>mt2</code>. One differentially expressed gene was multiplied
-into twelve, and the hypergeometric test — which assumes the genes are
-independent draws — believed it.</p>
-<p>The same happens on the down side, where four <code>ugt</code> genes
-expand to nineteen human UGTs each and manufacture a steroid metabolism
-story.</p>
-<blockquote>
-<p><strong>An ortholog mapping that expands genes will invent findings.
-Check how many partners each gene brought with it.</strong></p>
-</blockquote>
+<p>Twelve of the 13 genes are human metallothioneins, and all twelve
+come from a single zebrafish gene, <code>mt2</code>. One differentially
+expressed gene is counted twelve times, which violates the assumption of
+the enrichment test that genes are counted independently. The same
+occurs in the down-regulated list, where four <code>ugt</code> genes
+each map to 19 human UGT genes.</p>
+<p>When one gene maps to several orthologs, check how many human genes
+each zebrafish gene contributes before interpreting the enrichment.</p>
 </div>
-<div id="the-same-list-four-go-releases" class="section level2">
-<h2>7. The same list, four GO releases</h2>
-<p>We have been reading “GO Biological Process 2025” as though GO were a
-fixed object. It is not. Here is the identical 131-gene list against
-four releases.</p>
+<div id="effect-of-the-annotation-release" class="section level2">
+<h2>7. Effect of the annotation release</h2>
+<p>GO is updated regularly. The table below shows the same 131-gene list
+tested against four releases of GO Biological Process.</p>
 <pre class="r"><code>vintages = c(2021, 2023, 2025, 2026)
 
 summary_table = lapply(vintages, function(year) {
@@ -726,18 +697,16 @@ do.call(rbind, summary_table)</code></pre>
 ## 2    2023         1044          10 Response To Unfolded Protein  4.2e-04
 ## 3    2025         1034           2 Response to Unfolded Protein  4.2e-04
 ## 4    2026         1129          11 Response to Unfolded Protein  5.2e-04</code></pre>
-<p>Eighteen significant terms in 2021, two in 2025, eleven in 2026 — on
-identical input, from identical code. Had you run this analysis in 2021
-you would have had a much richer story to tell, and most of it would
-since have evaporated.</p>
-<p>One thing does not move:</p>
+<p>With the same input, the number of significant terms is 18 in 2021,
+10 in 2023, 2 in 2025 and 11 in 2026. The “response to unfolded protein”
+term in each release:</p>
 <pre class="r"><code>upr = lapply(vintages, function(year) {
   tb = read_tsv(sprintf(&quot;../../data/enrichment/human_GO_BP_%d_up.tsv&quot;, year),
                 show_col_types = FALSE)
   row = tb %&gt;% filter(grepl(&quot;unfolded protein&quot;, Term, ignore.case = TRUE)) %&gt;%
         arrange(`Adjusted P-value`) %&gt;% head(1)
-  # If a release spells the term differently there is no row at all, and
-  # data.frame() would stop the whole document rather than say so.
+  # If a release names the term differently there is no matching row;
+  # return NA instead of stopping the document.
   if (nrow(row) == 0) {
     data.frame(release = year, overlap = NA_character_, padj = NA_real_)
   } else {
@@ -753,27 +722,24 @@ do.call(rbind, upr)</code></pre>
 ## 2    2023    6/44 4.2e-04
 ## 3    2025    6/44 4.2e-04
 ## 4    2026    6/45 5.2e-04</code></pre>
-<p>The unfolded protein response is significant in every release. Even
-the size of the GO term itself changes between versions, and the result
-survives anyway.</p>
-<p>That is the lesson, and it generalises well beyond GO:</p>
-<blockquote>
-<p><strong>A conclusion that survives the database version is robust.
-One that does not is a property of the annotation, not of your
-experiment.</strong></p>
-</blockquote>
-<p>Re-running against another release costs one changed string. It is
-the cheapest robustness check available.</p>
+<p>“Response to unfolded protein” is significant in all four releases,
+although the number of genes annotated to the term changes between them.
+Most other terms are significant in only some releases.</p>
+<p>Results that remain significant across annotation releases are more
+reliable than those that depend on a single release. Repeating an
+analysis with another release requires changing only the library
+name.</p>
 </div>
-<div id="networks-string" class="section level2">
-<h2>8. Networks: STRING</h2>
-<p>Enrichment asks whether a list is full of a known category. A network
-asks a different question: do these proteins touch each other?</p>
-<p>Go to <a href="https://string-db.org" class="uri">https://string-db.org</a>, choose <strong>Multiple
+<div id="protein-interaction-networks-string" class="section level2">
+<h2>8. Protein interaction networks: STRING</h2>
+<p>Enrichment tests whether a list is over-represented in annotation
+categories. A network analysis instead examines known and predicted
+interactions between the proteins in the list.</p>
+<p>At <a href="https://string-db.org" class="uri">https://string-db.org</a>, choose <strong>Multiple
 proteins</strong>, paste the contents of
-<code>outputs/genes_down_human.txt</code>, and set the organism to
-<em>Homo sapiens</em>.</p>
-<p>The edges are also available as a table:</p>
+<code>outputs/genes_down_human.txt</code>, and select <em>Homo
+sapiens</em>.</p>
+<p>The interactions are also stored as a table:</p>
 <pre class="r"><code>edges = read_tsv(&quot;../../data/enrichment/string_edges_human_down.tsv&quot;,
                  show_col_types = FALSE)
 
@@ -789,7 +755,7 @@ nrow(edges)</code></pre>
 ## 4 CFTR            HSPB3           0.502
 ## 5 CFTR            SLC12A3         0.544
 ## 6 CFTR            KCNK3           0.555</code></pre>
-<pre class="r"><code># Which proteins have the most connections?
+<pre class="r"><code># Proteins with the largest number of interactions
 hubs = c(edges$preferredName_A, edges$preferredName_B) %&gt;%
   table() %&gt;%
   sort(decreasing = TRUE) %&gt;%
@@ -801,21 +767,20 @@ hubs</code></pre>
 ##      27      22      22      21      21      21      20      19      19      18 
 ##  GUCA1B    MYL2 
 ##      18      17</code></pre>
-<p><strong>Question.</strong> Compare the hub list with
-<code>ecm_genes</code> from section 5 — the genes behind “Extracellular
-Matrix Organization” in the same down-regulated list.</p>
+<p><strong>Question.</strong> Compare the most connected proteins with
+<code>ecm_genes</code> from section 5, the genes in “Extracellular
+Matrix Organization” for the same list.</p>
 <pre class="r"><code>intersect(names(hubs), ecm_genes)</code></pre>
 <pre><code>## [1] &quot;COL1A1&quot;  &quot;COL1A2&quot;  &quot;COL2A1&quot;  &quot;COL11A1&quot; &quot;COL10A1&quot;</code></pre>
-<p>Do the two methods agree? Should they? A hub is a protein with many
-partners; an enriched gene is one of many sharing a label. Those are
-different claims.</p>
+<p>To what extent do the two approaches agree? Note that a highly
+connected protein and a member of an enriched term are identified by
+different criteria.</p>
 </div>
-<div id="pathways-reactome" class="section level2">
-<h2>9. Pathways: Reactome</h2>
-<p>Reactome is a curated map of human pathways, more detailed and more
-strictly maintained than GO.</p>
+<div id="pathway-analysis-reactome" class="section level2">
+<h2>9. Pathway analysis: Reactome</h2>
+<p>Reactome is a manually curated database of human pathways.</p>
 <p>Paste <code>outputs/genes_down_human.txt</code> into <a href="https://reactome.org" class="uri">https://reactome.org</a> →
-<em>Analyse gene list</em>, or read the committed result:</p>
+<em>Analyse gene list</em>, or read the stored result:</p>
 <pre class="r"><code>reactome = read_tsv(&quot;../../data/enrichment/human_Reactome_2024_down.tsv&quot;,
                     show_col_types = FALSE)
 
@@ -836,20 +801,18 @@ reactome %&gt;%
 ##  8 ECM Proteoglycans                                    10/76       0.0000394   
 ##  9 Non-integrin membrane-ECM Interactions               9/59        0.0000394   
 ## 10 Degradation of the Extracellular Matrix              13/140      0.0000413</code></pre>
-<p><strong>Question.</strong> Reactome and GO are built by different
-curators from the same literature. Where do they agree here, and where
-does one of them see something the other does not?</p>
+<p><strong>Question.</strong> Where do the Reactome and GO results
+agree, and which results appear in only one of them?</p>
 </div>
-<div id="exercise-put-the-story-together" class="section level2">
-<h2>10. Exercise: put the story together</h2>
-<p>You now have, for the same experiment:</p>
+<div id="exercise-interpreting-the-results-together" class="section level2">
+<h2>10. Exercise: interpreting the results together</h2>
+<p>The analyses above show, for the same experiment:</p>
 <ul>
-<li>collagen and extracellular matrix genes strongly
-<strong>down</strong></li>
-<li>endoplasmic reticulum and protein-folding machinery strongly
-<strong>up</strong></li>
-<li><code>serpinh1b</code> / <code>SERPINH1</code> up more than
-thirteen-fold</li>
+<li>collagen and extracellular matrix genes are down-regulated</li>
+<li>chaperones and endoplasmic reticulum folding genes are
+up-regulated</li>
+<li><code>serpinh1b</code> (human <code>SERPINH1</code>) is up-regulated
+about thirteen-fold</li>
 </ul>
 <pre class="r"><code>res %&gt;%
   filter(gene %in% c(&quot;serpinh1b&quot;, &quot;hspa5&quot;, &quot;hsp90b1&quot;, &quot;pdia4&quot;,
@@ -866,15 +829,14 @@ thirteen-fold</li>
 ## 5 hsp90b1     10429.           1.69 2.18e-138
 ## 6 hspa5       10046.           1.88 2.44e-142
 ## 7 serpinh1b    8260.           3.72 1.21e-112</code></pre>
-<p><strong>Question.</strong> <code>SERPINH1</code> is better known as
-<strong>HSP47</strong>, and it is not a general chaperone: it folds
-collagen, and nothing else.</p>
-<p>Write two sentences connecting the three observations above into one
-explanation. Then write a third sentence describing an experiment that
-would test it.</p>
-<p><strong>Second question.</strong> Everything in this lesson rests on
-131 of 354 up-regulated genes. What happened to the other 223, and could
-their loss have biased the answer?</p>
+<p><strong>Question.</strong> <code>SERPINH1</code>, also known as
+HSP47, is a collagen-specific molecular chaperone in the endoplasmic
+reticulum.</p>
+<p>Propose an explanation that connects the three observations above,
+and describe an experiment that could test it.</p>
+<p><strong>Question.</strong> The human analysis used 131 of the 354
+up-regulated zebrafish genes. What happened to the remaining 223, and
+how could their exclusion affect the result?</p>
 </div>
 <div id="print-r-session-info" class="section level2">
 <h2>11. Print R session info</h2>

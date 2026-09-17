@@ -299,15 +299,13 @@ saveWorkbook(wb, file = file.path(out_dir, "TopGenes_perChamber.xlsx"), overwrit
 
 ```
 
-## Capstone: what are these chambers doing?
+## Capstone exercise: enrichment of chamber-specific genes
 
-Everything up to here has been guided. This part is not.
+This exercise applies the workflow from S6 to the human fetal heart data. The
+genes are already human symbols, so no ortholog mapping is required. Use Enrichr
+(<https://maayanlab.cloud/Enrichr/>) with **GO Biological Process 2025**.
 
-You have a human fetal heart dataset, four chambers, and the workflow from S6.
-This data is already human, so no ortholog mapping is needed — go straight to
-<https://maayanlab.cloud/Enrichr/> and use **GO Biological Process 2025**.
-
-### Step 1 — two lists, deliberately different
+### Step 1 — build two gene lists
 
 ```{r capstone gene lists}
 
@@ -318,7 +316,7 @@ list_A <- top_per_chamber %>%
   filter(chamber == "LA") %>%
   pull(Gene)
 
-# List B: the genes most specific to the left atrium relative to the right.
+# List B: the genes with the largest LA - RA difference.
 list_B <- atrial %>%
   slice_max(delta_LA_RA, n = 50) %>%
   pull(Gene)
@@ -326,46 +324,42 @@ list_B <- atrial %>%
 writeLines(list_A, file.path(out_dir, "LA_top_expressed.txt"))
 writeLines(list_B, file.path(out_dir, "LA_biased.txt"))
 
-# How much do they even have in common?
+# Number of genes shared by the two lists
 length(intersect(list_A, list_B))
 
 ```
 
-### Step 2 — enrich both
+### Step 2 — run the enrichment
 
 Submit each list to Enrichr and download the GO Biological Process 2025 table.
+Before looking at the results, note what you expect each list to return.
 
-**Predict before you look.** Write down what you expect each list to return.
+### Step 3 — compare the results
 
-### Step 3 — the question
+- How do the enriched terms differ between the two lists?
+- Which list is better suited to identifying differences between chambers, and
+  why?
+- Highly expressed genes tend to be similar across tissues. What does this imply
+  for using "most highly expressed" as the input to enrichment?
+- What background gene set does Enrichr use, and is it appropriate for either
+  list?
 
-One of these lists will come back full of ribosomes, mitochondria and muscle
-contraction. The other will come back with terms that actually distinguish one
-chamber from another.
+### Step 4 — inspect the genes behind the terms
 
-- Which is which, and why?
-- The top-expressed list of *any* human tissue returns roughly the same answer.
-  What does that tell you about using "most expressed" as a gene list?
-- What is the implicit background set in each case, and is it the right one?
+For the more informative list, examine the `Genes` column of the top five terms
+(see S6, section 8).
 
-### Step 4 — apply the S6 rule
+- Is any term driven mainly by a single gene family?
+- Do several terms share most of their genes?
+- Is any term name inconsistent with the tissue studied?
 
-For whichever list gave you the more interesting answer, open the `Genes`
-column of the top five terms.
+Summarise the results you consider supported, and list the terms you excluded
+with the reason for excluding each.
 
-- Is any term driven by a single gene family?
-- Do two or three terms rest on the same genes under different names?
-- Is any term obviously mislabelled for this tissue?
+### Step 5 — optional: ventricles
 
-Report the two or three findings you would actually defend, and say plainly
-which ones you discarded and why. That last sentence is the part that makes it
-science.
-
-### Step 5 — if you have time
-
-Repeat for the ventricles using `ventricular` and `delta_LV_RV`. Atria and
-ventricles are far more different from each other than left is from right. Does
-the enrichment show that?
+Repeat the analysis for the ventricles using `ventricular` and `delta_LV_RV`, and
+compare the results with those for the atria.
 
 ```{r capstone ventricles, eval=FALSE}
 
@@ -376,4 +370,3 @@ writeLines(list_LV, file.path(out_dir, "LV_biased.txt"))
 writeLines(list_RV, file.path(out_dir, "RV_biased.txt"))
 
 ```
-
