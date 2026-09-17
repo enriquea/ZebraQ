@@ -1,5 +1,5 @@
 ---
-title: "GSE106118 Hands-on: Basic R for Omics"
+title: "S8_Extra_GSE106118"
 author: "Enrique Audain Martinez"
 date: "`r Sys.Date()`"
 output: html_document
@@ -299,9 +299,74 @@ saveWorkbook(wb, file = file.path(out_dir, "TopGenes_perChamber.xlsx"), overwrit
 
 ```
 
-```{r GO enrichment, eval=FALSE}
-# Perform GO enrichment analysis on top chamber genes 
-# https://maayanlab.cloud/Enrichr/
+## Capstone exercise: enrichment of chamber-specific genes
+
+This exercise applies the workflow from S6 to the human fetal heart data. The
+genes are already human symbols, so no ortholog mapping is required. Use Enrichr
+(<https://maayanlab.cloud/Enrichr/>) with **GO Biological Process 2025**.
+
+### Step 1 — build two gene lists
+
+```{r capstone gene lists}
+
+dir.create(out_dir, showWarnings = FALSE)
+
+# List A: the most highly expressed genes in the left atrium.
+list_A <- top_per_chamber %>%
+  filter(chamber == "LA") %>%
+  pull(Gene)
+
+# List B: the genes with the largest LA - RA difference.
+list_B <- atrial %>%
+  slice_max(delta_LA_RA, n = 50) %>%
+  pull(Gene)
+
+writeLines(list_A, file.path(out_dir, "LA_top_expressed.txt"))
+writeLines(list_B, file.path(out_dir, "LA_biased.txt"))
+
+# Number of genes shared by the two lists
+length(intersect(list_A, list_B))
 
 ```
 
+### Step 2 — run the enrichment
+
+Submit each list to Enrichr and download the GO Biological Process 2025 table.
+Before looking at the results, note what you expect each list to return.
+
+### Step 3 — compare the results
+
+- How do the enriched terms differ between the two lists?
+- Which list is better suited to identifying differences between chambers, and
+  why?
+- Highly expressed genes tend to be similar across tissues. What does this imply
+  for using "most highly expressed" as the input to enrichment?
+- What background gene set does Enrichr use, and is it appropriate for either
+  list?
+
+### Step 4 — inspect the genes behind the terms
+
+For the more informative list, examine the `Genes` column of the top five terms
+(see S6, section 8).
+
+- Is any term driven mainly by a single gene family?
+- Do several terms share most of their genes?
+- Is any term name inconsistent with the tissue studied?
+
+Summarise the results you consider supported, and list the terms you excluded
+with the reason for excluding each.
+
+### Step 5 — optional: ventricles
+
+Repeat the analysis for the ventricles using `ventricular` and `delta_LV_RV`, and
+compare the results with those for the atria.
+
+```{r capstone ventricles, eval=FALSE}
+
+list_LV <- ventricular %>% slice_max(delta_LV_RV, n = 50) %>% pull(Gene)
+list_RV <- ventricular %>% slice_min(delta_LV_RV, n = 50) %>% pull(Gene)
+
+writeLines(list_LV, file.path(out_dir, "LV_biased.txt"))
+writeLines(list_RV, file.path(out_dir, "RV_biased.txt"))
+
+```
