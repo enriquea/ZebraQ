@@ -57,7 +57,7 @@ padj_max = 0.05
 lfc_min  = 1
 
 de = res %>%
-  filter(!is.na(padj), padj < padj_max, abs(log2FoldChange) > lfc_min)
+  dplyr::filter(!is.na(padj), padj < padj_max, abs(log2FoldChange) > lfc_min)
 
 genes_up   = sort(de$gene[de$log2FoldChange > 0])
 genes_down = sort(de$gene[de$log2FoldChange < 0])
@@ -237,14 +237,14 @@ names(fish_down)
 ```{r significant terms, echo = TRUE}
 
 sig_down = fish_down %>%
-  filter(`Adjusted P-value` < 0.05) %>%
-  arrange(`Adjusted P-value`)
+  dplyr::filter(`Adjusted P-value` < 0.05) %>%
+  dplyr::arrange(`Adjusted P-value`)
 
 # Format for display only, three significant figures in scientific notation.
 # Rounding to decimal places would turn 1.8e-10 into 0.
 sig_down %>%
-  select(Term, Overlap, `Adjusted P-value`) %>%
-  mutate(`Adjusted P-value` = formatC(`Adjusted P-value`, format = "e", digits = 2))
+  dplyr::select(Term, Overlap, `Adjusted P-value`) %>%
+  dplyr::mutate(`Adjusted P-value` = formatC(`Adjusted P-value`, format = "e", digits = 2))
 
 ```
 
@@ -307,8 +307,8 @@ contribute to each term and should be checked before a result is reported.
 ```{r driver genes, echo = TRUE}
 
 sig_down %>%
-  select(Term, Overlap, Genes) %>%
-  mutate(Term = sub(" \\(GO:.*", "", Term)) %>%
+  dplyr::select(Term, Overlap, Genes) %>%
+  dplyr::mutate(Term = sub(" \\(GO:.*", "", Term)) %>%
   as.data.frame()
 
 ```
@@ -347,9 +347,9 @@ The samples are described as dissected hearts at 48 hpf.
 ```{r photoreceptor check, echo = TRUE}
 
 res %>%
-  filter(gene %in% c("rho", "crx", "opn1sw1", "opn1sw2", "opn1lw2", "opn1mw1")) %>%
-  select(gene, baseMean, log2FoldChange, padj) %>%
-  arrange(desc(baseMean))
+  dplyr::filter(gene %in% c("rho", "crx", "opn1sw1", "opn1sw2", "opn1lw2", "opn1mw1")) %>%
+  dplyr::select(gene, baseMean, log2FoldChange, padj) %>%
+  dplyr::arrange(dplyr::desc(baseMean))
 
 ```
 
@@ -365,9 +365,9 @@ Repeat for the following genes and consider whether the same explanation applies
 ```{r circadian check, echo = TRUE}
 
 res %>%
-  filter(gene %in% c("per1a", "per2", "per3", "nr1d1", "npas2", "cry5")) %>%
-  select(gene, baseMean, log2FoldChange, padj) %>%
-  arrange(log2FoldChange)
+  dplyr::filter(gene %in% c("per1a", "per2", "per3", "nr1d1", "npas2", "cry5")) %>%
+  dplyr::select(gene, baseMean, log2FoldChange, padj) %>%
+  dplyr::arrange(log2FoldChange)
 
 ```
 
@@ -416,9 +416,9 @@ before answering:
 ```{r chd genes de, echo = TRUE}
 
 res %>%
-  filter(tolower(gene) %in% chd_symbols, gene %in% de$gene) %>%
-  select(gene, baseMean, log2FoldChange, padj) %>%
-  arrange(log2FoldChange)
+  dplyr::filter(tolower(gene) %in% chd_symbols, gene %in% de$gene) %>%
+  dplyr::select(gene, baseMean, log2FoldChange, padj) %>%
+  dplyr::arrange(log2FoldChange)
 
 ```
 

@@ -11,7 +11,7 @@
 
 <meta name="author" content="Enrique Audain Martinez" />
 
-<meta name="date" content="2026-09-17" />
+<meta name="date" content="2026-09-18" />
 
 <title>S6_Gene_Lists_to_Biology</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">S6_Gene_Lists_to_Biology</h1>
 <h4 class="author">Enrique Audain Martinez</h4>
-<h4 class="date">2026-09-17</h4>
+<h4 class="date">2026-09-18</h4>
 
 </div>
 
@@ -398,7 +398,7 @@ padj_max = 0.05
 lfc_min  = 1
 
 de = res %&gt;%
-  filter(!is.na(padj), padj &lt; padj_max, abs(log2FoldChange) &gt; lfc_min)
+  dplyr::filter(!is.na(padj), padj &lt; padj_max, abs(log2FoldChange) &gt; lfc_min)
 
 genes_up   = sort(de$gene[de$log2FoldChange &gt; 0])
 genes_down = sort(de$gene[de$log2FoldChange &lt; 0])
@@ -601,14 +601,14 @@ dim(fish_down)</code></pre>
 ## [4] &quot;Adjusted P-value&quot;     &quot;Old P-value&quot;          &quot;Old Adjusted P-value&quot;
 ## [7] &quot;Z-score&quot;              &quot;Combined Score&quot;       &quot;Genes&quot;</code></pre>
 <pre class="r"><code>sig_down = fish_down %&gt;%
-  filter(`Adjusted P-value` &lt; 0.05) %&gt;%
-  arrange(`Adjusted P-value`)
+  dplyr::filter(`Adjusted P-value` &lt; 0.05) %&gt;%
+  dplyr::arrange(`Adjusted P-value`)
 
 # Format for display only, three significant figures in scientific notation.
 # Rounding to decimal places would turn 1.8e-10 into 0.
 sig_down %&gt;%
-  select(Term, Overlap, `Adjusted P-value`) %&gt;%
-  mutate(`Adjusted P-value` = formatC(`Adjusted P-value`, format = &quot;e&quot;, digits = 2))</code></pre>
+  dplyr::select(Term, Overlap, `Adjusted P-value`) %&gt;%
+  dplyr::mutate(`Adjusted P-value` = formatC(`Adjusted P-value`, format = &quot;e&quot;, digits = 2))</code></pre>
 <pre><code>## # A tibble: 5 x 3
 ##   Term                                           Overlap `Adjusted P-value`
 ##   &lt;chr&gt;                                          &lt;chr&gt;   &lt;chr&gt;             
@@ -663,8 +663,8 @@ pipelines, and a term name may not describe why a gene set was selected.
 The <code>Genes</code> column lists the genes that contribute to each
 term and should be checked before a result is reported.</p>
 <pre class="r"><code>sig_down %&gt;%
-  select(Term, Overlap, Genes) %&gt;%
-  mutate(Term = sub(&quot; \\(GO:.*&quot;, &quot;&quot;, Term)) %&gt;%
+  dplyr::select(Term, Overlap, Genes) %&gt;%
+  dplyr::mutate(Term = sub(&quot; \\(GO:.*&quot;, &quot;&quot;, Term)) %&gt;%
   as.data.frame()</code></pre>
 <pre><code>##                                Term Overlap
 ## 1 extracellular matrix organization   21/92
@@ -710,9 +710,9 @@ that produced it.</p>
 <h2>9. Exercise: photoreceptor and clock genes</h2>
 <p>The samples are described as dissected hearts at 48 hpf.</p>
 <pre class="r"><code>res %&gt;%
-  filter(gene %in% c(&quot;rho&quot;, &quot;crx&quot;, &quot;opn1sw1&quot;, &quot;opn1sw2&quot;, &quot;opn1lw2&quot;, &quot;opn1mw1&quot;)) %&gt;%
-  select(gene, baseMean, log2FoldChange, padj) %&gt;%
-  arrange(desc(baseMean))</code></pre>
+  dplyr::filter(gene %in% c(&quot;rho&quot;, &quot;crx&quot;, &quot;opn1sw1&quot;, &quot;opn1sw2&quot;, &quot;opn1lw2&quot;, &quot;opn1mw1&quot;)) %&gt;%
+  dplyr::select(gene, baseMean, log2FoldChange, padj) %&gt;%
+  dplyr::arrange(dplyr::desc(baseMean))</code></pre>
 <pre><code>## # A tibble: 6 x 4
 ##   gene    baseMean log2FoldChange     padj
 ##   &lt;chr&gt;      &lt;dbl&gt;          &lt;dbl&gt;    &lt;dbl&gt;
@@ -732,9 +732,9 @@ next?</p>
 <p>Repeat for the following genes and consider whether the same
 explanation applies:</p>
 <pre class="r"><code>res %&gt;%
-  filter(gene %in% c(&quot;per1a&quot;, &quot;per2&quot;, &quot;per3&quot;, &quot;nr1d1&quot;, &quot;npas2&quot;, &quot;cry5&quot;)) %&gt;%
-  select(gene, baseMean, log2FoldChange, padj) %&gt;%
-  arrange(log2FoldChange)</code></pre>
+  dplyr::filter(gene %in% c(&quot;per1a&quot;, &quot;per2&quot;, &quot;per3&quot;, &quot;nr1d1&quot;, &quot;npas2&quot;, &quot;cry5&quot;)) %&gt;%
+  dplyr::select(gene, baseMean, log2FoldChange, padj) %&gt;%
+  dplyr::arrange(log2FoldChange)</code></pre>
 <pre><code>## # A tibble: 6 x 4
 ##   gene  baseMean log2FoldChange     padj
 ##   &lt;chr&gt;    &lt;dbl&gt;          &lt;dbl&gt;    &lt;dbl&gt;
@@ -786,9 +786,9 @@ actually testable.</p>
 mean the CHD genes are not relevant to this experiment? Check which CHD
 genes are differentially expressed before answering:</p>
 <pre class="r"><code>res %&gt;%
-  filter(tolower(gene) %in% chd_symbols, gene %in% de$gene) %&gt;%
-  select(gene, baseMean, log2FoldChange, padj) %&gt;%
-  arrange(log2FoldChange)</code></pre>
+  dplyr::filter(tolower(gene) %in% chd_symbols, gene %in% de$gene) %&gt;%
+  dplyr::select(gene, baseMean, log2FoldChange, padj) %&gt;%
+  dplyr::arrange(log2FoldChange)</code></pre>
 <pre><code>## # A tibble: 6 x 4
 ##   gene   baseMean log2FoldChange     padj
 ##   &lt;chr&gt;     &lt;dbl&gt;          &lt;dbl&gt;    &lt;dbl&gt;
