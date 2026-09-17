@@ -1,0 +1,458 @@
+---
+title: "S7_Orthologs_Networks_Pathways"
+author: "Enrique Audain Martinez"
+date: "`r Sys.Date()`"
+output: 
+   html_document: default
+   pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+S6 ended on a failure. Three hundred and fifty-four genes go up, strongly and
+significantly, and they enrich in nothing at all.
+
+This lesson asks whether those genes are really uninformative, or whether we
+were simply asking a database that does not know very much.
+
+
+## 1. Load libraries
+
+```{r load libraries, echo = TRUE, message=FALSE, warning=FALSE}
+
+library(dplyr, quietly = TRUE)
+library(readr, quietly = TRUE)
+library(ggplot2, quietly = TRUE)
+
+```
+
+```{r rebuild lists, echo = TRUE}
+
+# The same lists S6 built.
+res = read_tsv("../../results/DESeq2_results.tsv", show_col_types = FALSE)
+
+de = res %>% filter(!is.na(padj), padj < 0.05, abs(log2FoldChange) > 1)
+
+genes_up   = sort(de$gene[de$log2FoldChange > 0])
+genes_down = sort(de$gene[de$log2FoldChange < 0])
+
+```
+
+
+## 2. How much does the database actually know?
+
+FishEnrichr's GO Biological Process library is dated **2018**. The human one is
+current. That is not an accident of this website: zebrafish annotation really is
+thinner and older than human annotation, because far more people have spent far
+more money studying human genes.
+
+So an alternative explanation for S6's empty result is available. Perhaps the
+up-regulated genes do something specific, and nobody has written it down in
+zebrafish.
+
+We can test that. Most zebrafish genes have a human counterpart.
+
+
+## 3. Orthologs
+
+Two genes are **orthologs** if they descend from the same gene in the common
+ancestor of the two species. Ensembl computes these for every pair of species it
+hosts, and labels each relationship:
+
+| Type | Meaning |
+| --- | --- |
+| `ortholog_one2one` | one zebrafish gene, one human gene |
+| `ortholog_one2many` | the relationship is one-to-many in some direction |
+| `ortholog_many2many` | several genes on both sides |
+
+Zebrafish is an awkward case. Its lineage went through an extra whole-genome
+duplication, so a single human gene frequently has two zebrafish copies, named
+`a` and `b`: human `COL1A1` corresponds to zebrafish `col1a1a` and `col1a1b`.
+
+### From R
+
+```{r biomart, echo = TRUE, eval = FALSE}
+
+library(biomaRt)
+
+mart = useEnsembl("genes", "drerio_gene_ensembl")
+
+orth = getBM(
+  attributes = c("external_gene_name",
+                 "hsapiens_homolog_associated_gene_name",
+                 "hsapiens_homolog_orthology_type",
+                 "hsapiens_homolog_orthology_confidence"),
+  mart = mart)
+
+head(orth)
+
+```
+
+This chunk is not run when the lesson is knitted, and you may well find it fails
+when you run it. `biomaRt` needs a live connection to Ensembl and up-to-date
+certificates on your machine; while this course was being written it failed with
+`SSL certificate problem: certificate has expired`.
+
+That is ordinary. It is also why `data/enrichment/make_enrichment_data.R`
+carries a fallback that asks the same Ensembl for the same four columns over
+plain HTTP, and why the table is committed to the repository.
+
+### From the browser
+
+The same query, by hand: <https://www.ensembl.org/biomart/martview>
+
+- **Dataset**: Ensembl Genes → Zebrafish genes
+- **Attributes**: uncheck the defaults, then under *Homologues* pick
+  Gene name, Human gene name, Human homology type
+- **Results** → Export all results to TSV
+
+### The committed table
+
+```{r load orthologs, echo = TRUE}
+
+orth = read_tsv("../../data/enrichment/zfish_human_orthologs.tsv",
+                show_col_types = FALSE)
+
+head(orth)
+
+nrow(orth)
+
+n_distinct(orth$zfish_symbol)
+
+```
+
+
+## 4. What "1:1" has to mean
+
+The obvious filter is Ensembl's own label. It is also wrong here, and the reason
+is worth the five minutes.
+
+```{r the trap, echo = TRUE}
+
+orth %>%
+  filter(zfish_symbol %in% c("serpinh1b", "col1a1a", "col1a1b", "hspa5", "col1a2")) %>%
+  select(zfish_symbol, human_symbol, orthology_type, n_human_partners)
+
+```
+
+`serpinh1b` is labelled `ortholog_one2many`, so a strict `ortholog_one2one`
+filter throws it away. But look at `n_human_partners`: it is **1**. `serpinh1b`
+maps to exactly one human gene, `SERPINH1`. The label says "many" because
+*`SERPINH1` has two zebrafish partners*, `serpinh1a` and `serpinh1b`.
+
+The ambiguity is on the zebrafish side. We are travelling from zebrafish to
+human, so it does not affect us.
+
+This matters because `serpinh1b` is the most strongly induced gene in the whole
+experiment:
+
+```{r serpinh1b, echo = TRUE}
+
+res %>% filter(gene == "serpinh1b") %>% select(gene, baseMean, log2FoldChange, padj)
+
+```
+
+A strict `ortholog_one2one` filter would silently delete it, along with
+`col1a1a`, `col1a1b`, `col2a1a`, `ankrd1b` and every other gene the teleost
+duplication touched — which, in a zebrafish experiment, is a great many of the
+interesting ones.
+
+So the filter we want is "one zebrafish gene, one human gene", expressed
+directly:
+
+```{r unambiguous, echo = TRUE}
+
+unambiguous = orth %>% filter(n_human_partners == 1)
+
+to_human = function(fish_genes) {
+  sort(unique(unambiguous$human_symbol[unambiguous$zfish_symbol %in% fish_genes]))
+}
+
+human_up   = to_human(genes_up)
+human_down = to_human(genes_down)
+
+length(genes_up);   length(human_up)
+length(genes_down); length(human_down)
+
+```
+
+Several zebrafish genes may still land on the same human gene — `col1a1a` and
+`col1a1b` both give `COL1A1`. That direction is safe: we take unique symbols, so
+a gene set can only shrink, never inflate.
+
+The next section shows what happens when it is allowed to inflate.
+
+
+## 5. What the mapping finds
+
+```{r write human lists, echo = TRUE}
+
+dir.create("outputs", showWarnings = FALSE)
+
+writeLines(human_up,   "outputs/genes_up_human.txt")
+writeLines(human_down, "outputs/genes_down_human.txt")
+
+```
+
+Submit these to **Enrichr** (the human site, <https://maayanlab.cloud/Enrichr/>)
+against **GO Biological Process 2025**, exactly as in S6. Or read the committed
+results:
+
+```{r read human enrichment, echo = TRUE}
+
+read_enrichment = function(mine, committed) {
+  path = if (file.exists(mine)) mine else committed
+  read_tsv(path, show_col_types = FALSE)
+}
+
+human_up_go = read_enrichment("outputs/GO_Biological_Process_2025_table.txt",
+                              "../../data/enrichment/human_GO_BP_2025_up.tsv")
+
+human_up_go %>%
+  filter(`Adjusted P-value` < 0.05) %>%
+  select(Term, Overlap, `Adjusted P-value`, Genes)
+
+```
+
+In zebrafish these genes enriched in nothing. In human they carry the
+**unfolded protein response**: `HSPA5` is BiP, the master sensor of endoplasmic
+reticulum stress, and `PDIA4`, `PDIA6`, `HSP90B1` and `HYOU1` are all ER folding
+machinery.
+
+And this came from *fewer* genes — 131 human symbols out of 354 zebrafish ones.
+The limitation was never the statistics. It was how much had been written down.
+
+### The control
+
+A result that appears only after a transformation deserves suspicion. The
+transformation might have created it.
+
+The test is the down-regulated list, which already had a clear answer in
+zebrafish. If the mapping is trustworthy, it should give the same answer again.
+
+```{r human down, echo = TRUE}
+
+human_down_go = read_enrichment("outputs/GO_Biological_Process_2025_table_down.txt",
+                                "../../data/enrichment/human_GO_BP_2025_down.tsv")
+
+human_down_go %>%
+  filter(`Adjusted P-value` < 0.05) %>%
+  select(Term, Overlap, `Adjusted P-value`) %>%
+  head(8)
+
+```
+
+Extracellular matrix organisation and collagen fibril organisation, as before.
+The mapping reproduces what we already knew, so the new finding in the up-list
+is more believable.
+
+Notice also what the richer annotation adds: `Metal Ion Transport` and
+`Modulation of Chemical Synaptic Transmission` were invisible in the 2018
+zebrafish library.
+
+
+## 6. What happens without the filter
+
+Suppose we had kept every ortholog, ambiguous ones included.
+
+```{r allortho, echo = TRUE}
+
+all_up_go = read_tsv("../../data/enrichment/human_GO_BP_2025_up_ALLORTHO.tsv",
+                     show_col_types = FALSE)
+
+all_up_go %>%
+  filter(`Adjusted P-value` < 0.05) %>%
+  select(Term, Overlap, `Adjusted P-value`) %>%
+  head(5)
+
+```
+
+`Cellular Response to Zinc Ion` at an adjusted p-value of 2 in 10^19. Sixty
+significant terms instead of two. A spectacular result.
+
+It is also entirely fabricated. Look at the genes:
+
+```{r allortho genes, echo = TRUE}
+
+all_up_go$Genes[1]
+
+```
+
+```{r mt2, echo = TRUE}
+
+orth %>% filter(zfish_symbol == "mt2") %>% select(zfish_symbol, human_symbol, orthology_type)
+
+```
+
+Twelve of those thirteen genes are human metallothioneins, and every one of them
+entered the list through a **single** zebrafish gene, `mt2`. One differentially
+expressed gene was multiplied into twelve, and the hypergeometric test — which
+assumes the genes are independent draws — believed it.
+
+The same happens on the down side, where four `ugt` genes expand to nineteen
+human UGTs each and manufacture a steroid metabolism story.
+
+> **An ortholog mapping that expands genes will invent findings. Check how many
+> partners each gene brought with it.**
+
+
+## 7. The same list, four GO releases
+
+We have been reading "GO Biological Process 2025" as though GO were a fixed
+object. It is not. Here is the identical 131-gene list against four releases.
+
+```{r vintages, echo = TRUE}
+
+vintages = c(2021, 2023, 2025, 2026)
+
+summary_table = lapply(vintages, function(year) {
+  tb = read_tsv(sprintf("../../data/enrichment/human_GO_BP_%d_up.tsv", year),
+                show_col_types = FALSE)
+  sig = tb %>% filter(`Adjusted P-value` < 0.05) %>% arrange(`Adjusted P-value`)
+  data.frame(
+    release     = year,
+    terms_tested = nrow(tb),
+    significant  = nrow(sig),
+    top_term     = sub(" \\(GO:.*", "", sig$Term[1]),
+    top_padj     = signif(sig$`Adjusted P-value`[1], 2)
+  )
+})
+
+do.call(rbind, summary_table)
+
+```
+
+Eighteen significant terms in 2021, two in 2025, eleven in 2026 — on identical
+input, from identical code. Had you run this analysis in 2021 you would have had
+a much richer story to tell, and most of it would since have evaporated.
+
+One thing does not move:
+
+```{r upr across vintages, echo = TRUE}
+
+upr = lapply(vintages, function(year) {
+  tb = read_tsv(sprintf("../../data/enrichment/human_GO_BP_%d_up.tsv", year),
+                show_col_types = FALSE)
+  row = tb %>% filter(grepl("unfolded protein", Term, ignore.case = TRUE)) %>%
+        arrange(`Adjusted P-value`) %>% head(1)
+  data.frame(release = year,
+             overlap = row$Overlap,
+             padj    = signif(row$`Adjusted P-value`, 2))
+})
+
+do.call(rbind, upr)
+
+```
+
+The unfolded protein response is significant in every release. Even the size of
+the GO term itself changes between versions, and the result survives anyway.
+
+That is the lesson, and it generalises well beyond GO:
+
+> **A conclusion that survives the database version is robust. One that does not
+> is a property of the annotation, not of your experiment.**
+
+Re-running against another release costs one changed string. It is the cheapest
+robustness check available.
+
+
+## 8. Networks: STRING
+
+Enrichment asks whether a list is full of a known category. A network asks a
+different question: do these proteins touch each other?
+
+Go to <https://string-db.org>, choose **Multiple proteins**, paste the contents
+of `outputs/genes_down_human.txt`, and set the organism to *Homo sapiens*.
+
+The edges are also available as a table:
+
+```{r string, echo = TRUE}
+
+edges = read_tsv("../../data/enrichment/string_edges_human_down.tsv",
+                 show_col_types = FALSE)
+
+nrow(edges)
+
+edges %>% select(preferredName_A, preferredName_B, score) %>% head()
+
+```
+
+```{r string hubs, echo = TRUE}
+
+# Which proteins have the most connections?
+hubs = c(edges$preferredName_A, edges$preferredName_B) %>%
+  table() %>%
+  sort(decreasing = TRUE) %>%
+  head(12)
+
+hubs
+
+```
+
+**Question.** Compare the hub list with the genes behind the top GO term in
+section 5. Do the two methods agree? Should they?
+
+
+## 9. Pathways: Reactome
+
+Reactome is a curated map of human pathways, more detailed and more strictly
+maintained than GO.
+
+Paste `outputs/genes_down_human.txt` into <https://reactome.org> → *Analyse gene
+list*, or read the committed result:
+
+```{r reactome, echo = TRUE}
+
+reactome = read_tsv("../../data/enrichment/human_Reactome_2024_down.tsv",
+                    show_col_types = FALSE)
+
+reactome %>%
+  filter(`Adjusted P-value` < 0.05) %>%
+  select(Term, Overlap, `Adjusted P-value`) %>%
+  head(10)
+
+```
+
+**Question.** Reactome and GO are built by different curators from the same
+literature. Where do they agree here, and where does one of them see something
+the other does not?
+
+
+## 10. Exercise: put the story together
+
+You now have, for the same experiment:
+
+- collagen and extracellular matrix genes strongly **down**
+- endoplasmic reticulum and protein-folding machinery strongly **up**
+- `serpinh1b` / `SERPINH1` up more than thirteen-fold
+
+```{r serpinh1 identity, echo = TRUE}
+
+res %>%
+  filter(gene %in% c("serpinh1b", "hspa5", "hsp90b1", "pdia4",
+                     "col1a1a", "col1a2", "col11a2")) %>%
+  select(gene, baseMean, log2FoldChange, padj) %>%
+  arrange(log2FoldChange)
+
+```
+
+**Question.** `SERPINH1` is better known as **HSP47**, and it is not a general
+chaperone: it folds collagen, and nothing else.
+
+Write two sentences connecting the three observations above into one
+explanation. Then write a third sentence describing an experiment that would
+test it.
+
+**Second question.** Everything in this lesson rests on 131 of 354
+up-regulated genes. What happened to the other 223, and could their loss have
+biased the answer?
+
+
+## 11. Print R session info
+
+```{r print out R session info, echo = TRUE}
+# Always good practice to print out the R session info for reproducibility
+sessionInfo()
+```

@@ -37,13 +37,19 @@ BIOC_FOR_R <- c("4.1" = "3.14", "4.2" = "3.16", "4.3" = "3.18",
 CRAN_SNAPSHOT <- "2026-09-01"
 CRAN_BASE <- "https://packagemanager.posit.co/cran"
 
-## tidyverse is required by lessons-r/S6 (which also uses readr::, pulled in by
+## tidyverse is required by lessons-r/S8 (which also uses readr::, pulled in by
 ## tidyverse). Keep this list in step with the library() calls in lessons-r/.
+##
+## enrichR, httr and jsonlite are used by S6 and S7 to talk to Enrichr; biomaRt
+## fetches zebrafish-to-human orthologs in S7. Every one of those steps also has
+## a committed fallback in data/enrichment/, so a failed install or a service
+## outage does not stop the lesson.
 CRAN_PKGS <- c(
   "tidyverse", "ggplot2", "ggpubr", "dplyr", "RColorBrewer",
-  "readxl", "openxlsx", "pheatmap", "matrixStats", "microbenchmark"
+  "readxl", "openxlsx", "pheatmap", "matrixStats", "microbenchmark",
+  "enrichR", "httr", "jsonlite"
 )
-BIOC_PKGS <- c("DESeq2", "EnhancedVolcano")
+BIOC_PKGS <- c("DESeq2", "EnhancedVolcano", "biomaRt")
 
 ## ------------------------------------------------------------ R version ---
 current <- paste(R.version$major, strsplit(R.version$minor, ".", fixed = TRUE)[[1]][1], sep = ".")

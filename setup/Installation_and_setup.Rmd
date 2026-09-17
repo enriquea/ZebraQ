@@ -114,16 +114,23 @@ see at the end of each Python notebook.
 
 ## Packages this installs
 
-From CRAN: `tidyverse` (required by S6), `ggplot2`, `ggpubr`, `dplyr`,
-`RColorBrewer`, `readxl`, `openxlsx`, `pheatmap`, `matrixStats`, `microbenchmark`.
+From CRAN: `tidyverse` (required by S8), `ggplot2`, `ggpubr`, `dplyr`,
+`RColorBrewer`, `readxl`, `openxlsx`, `pheatmap`, `matrixStats`, `microbenchmark`,
+`enrichR`, `httr`, `jsonlite`.
 
-From Bioconductor: `DESeq2`, `EnhancedVolcano`.
+From Bioconductor: `DESeq2`, `EnhancedVolcano`, `biomaRt`.
+
+`enrichR`, `httr` and `jsonlite` let S6 and S7 talk to Enrichr; `biomaRt` fetches
+zebrafish-to-human orthologs in S7. All three of those steps also read from
+committed copies in `data/enrichment/`, so the lessons still run if a package is
+missing or a service is down.
 
 ```{r verify}
 # Check what you ended up with at any point:
 for (p in c("tidyverse", "ggplot2", "ggpubr", "dplyr", "RColorBrewer", "readxl",
             "openxlsx", "pheatmap", "matrixStats", "microbenchmark",
-            "DESeq2", "EnhancedVolcano")) {
+            "enrichR", "httr", "jsonlite",
+            "DESeq2", "EnhancedVolcano", "biomaRt")) {
   cat(sprintf("%-18s %s\n", p, tryCatch(as.character(packageVersion(p)),
                                         error = function(e) "not installed")))
 }

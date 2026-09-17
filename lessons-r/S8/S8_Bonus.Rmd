@@ -1,5 +1,5 @@
 ---
-title: "GSE106118 Hands-on: Basic R for Omics"
+title: "S8_Bonus_GSE106118"
 author: "Enrique Audain Martinez"
 date: "`r Sys.Date()`"
 output: html_document
@@ -299,9 +299,81 @@ saveWorkbook(wb, file = file.path(out_dir, "TopGenes_perChamber.xlsx"), overwrit
 
 ```
 
-```{r GO enrichment, eval=FALSE}
-# Perform GO enrichment analysis on top chamber genes 
-# https://maayanlab.cloud/Enrichr/
+## Capstone: what are these chambers doing?
+
+Everything up to here has been guided. This part is not.
+
+You have a human fetal heart dataset, four chambers, and the workflow from S6.
+This data is already human, so no ortholog mapping is needed — go straight to
+<https://maayanlab.cloud/Enrichr/> and use **GO Biological Process 2025**.
+
+### Step 1 — two lists, deliberately different
+
+```{r capstone gene lists}
+
+dir.create(out_dir, showWarnings = FALSE)
+
+# List A: the most highly expressed genes in the left atrium.
+list_A <- top_per_chamber %>%
+  filter(chamber == "LA") %>%
+  pull(Gene)
+
+# List B: the genes most specific to the left atrium relative to the right.
+list_B <- atrial %>%
+  slice_max(delta_LA_RA, n = 50) %>%
+  pull(Gene)
+
+writeLines(list_A, file.path(out_dir, "LA_top_expressed.txt"))
+writeLines(list_B, file.path(out_dir, "LA_biased.txt"))
+
+# How much do they even have in common?
+length(intersect(list_A, list_B))
+
+```
+
+### Step 2 — enrich both
+
+Submit each list to Enrichr and download the GO Biological Process 2025 table.
+
+**Predict before you look.** Write down what you expect each list to return.
+
+### Step 3 — the question
+
+One of these lists will come back full of ribosomes, mitochondria and muscle
+contraction. The other will come back with terms that actually distinguish one
+chamber from another.
+
+- Which is which, and why?
+- The top-expressed list of *any* human tissue returns roughly the same answer.
+  What does that tell you about using "most expressed" as a gene list?
+- What is the implicit background set in each case, and is it the right one?
+
+### Step 4 — apply the S6 rule
+
+For whichever list gave you the more interesting answer, open the `Genes`
+column of the top five terms.
+
+- Is any term driven by a single gene family?
+- Do two or three terms rest on the same genes under different names?
+- Is any term obviously mislabelled for this tissue?
+
+Report the two or three findings you would actually defend, and say plainly
+which ones you discarded and why. That last sentence is the part that makes it
+science.
+
+### Step 5 — if you have time
+
+Repeat for the ventricles using `ventricular` and `delta_LV_RV`. Atria and
+ventricles are far more different from each other than left is from right. Does
+the enrichment show that?
+
+```{r capstone ventricles, eval=FALSE}
+
+list_LV <- ventricular %>% slice_max(delta_LV_RV, n = 50) %>% pull(Gene)
+list_RV <- ventricular %>% slice_min(delta_LV_RV, n = 50) %>% pull(Gene)
+
+writeLines(list_LV, file.path(out_dir, "LV_biased.txt"))
+writeLines(list_RV, file.path(out_dir, "RV_biased.txt"))
 
 ```
 

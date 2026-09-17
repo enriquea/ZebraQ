@@ -1,0 +1,364 @@
+---
+title: "S6_Gene_Lists_to_Biology"
+author: "Enrique Audain Martinez"
+date: "`r Sys.Date()`"
+output: 
+   html_document: default
+   pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+Day 1 ended with a volcano plot: a few hundred genes that changed between mutant
+and wild type. That is a list of names. It is not yet a statement about biology.
+
+This lesson turns the list into a statement, and then teaches you to distrust it.
+
+
+## 1. Load libraries
+
+```{r load libraries, echo = TRUE, message=FALSE, warning=FALSE}
+
+library(dplyr, quietly = TRUE)
+library(readr, quietly = TRUE)
+library(ggplot2, quietly = TRUE)
+
+```
+
+
+## 2. Where day 1 left us
+
+```{r load results, echo = TRUE}
+
+# The results table written by S4, and visualised in S5.
+res = read_tsv("../../results/DESeq2_results.tsv", show_col_types = FALSE)
+
+head(res)
+
+nrow(res)
+
+```
+
+
+## 3. Build the gene lists
+
+An enrichment tool takes a *set* of genes, not a ranked table. So the first
+decision is which genes get in.
+
+```{r build lists, echo = TRUE}
+
+# padj  : how confident are we that this gene changed at all
+# log2FoldChange : how much did it change
+#
+# Both matter. A gene can be significant and barely move; a gene can move a lot
+# and be noise.
+padj_max = 0.05
+lfc_min  = 1
+
+de = res %>%
+  filter(!is.na(padj), padj < padj_max, abs(log2FoldChange) > lfc_min)
+
+genes_up   = sort(de$gene[de$log2FoldChange > 0])
+genes_down = sort(de$gene[de$log2FoldChange < 0])
+
+length(genes_up)
+length(genes_down)
+
+```
+
+Notice that these cutoffs are **not** the ones the volcano plot used in S5
+(`padj < 0.001`, `|log2FC| > 2.5`, which keep only 48 and 55 genes).
+
+That was not an inconsistency. The volcano's cutoffs exist so the gene labels
+stay readable on a crowded figure. Choosing genes for enrichment is a different
+job, and it gets its own decision. Be suspicious of any analysis that reuses a
+threshold without saying why.
+
+```{r save lists, echo = TRUE}
+
+# Save the lists so we can paste them into a website in a moment.
+dir.create("outputs", showWarnings = FALSE)
+
+writeLines(genes_up,   "outputs/genes_up.txt")
+writeLines(genes_down, "outputs/genes_down.txt")
+
+# What we are about to hand over is just names, one per line:
+head(genes_down, 10)
+
+```
+
+
+## 4. Where a gene list can be taken
+
+A gene symbol is a key into a large number of public databases. Knowing which
+one answers which question is most of the skill.
+
+| Resource | Answers |
+| --- | --- |
+| **NCBI Gene** | What is this gene, in any organism? |
+| **Ensembl** | Where is it in the genome, and what is its equivalent in another species? |
+| **ZFIN** | Everything zebrafish: expression patterns, mutants, phenotypes |
+| **UniProt** | What does the protein do, and what does it look like? |
+| **GO** | Controlled vocabulary of biological processes, functions and locations |
+| **KEGG** / **Reactome** | Curated pathway maps |
+| **STRING** | Which proteins interact with which |
+| **Enrichr** | Is my gene list unusually full of any of the above? |
+
+The one we need now is the last. We have 588 down-regulated genes; we want to
+know whether they share anything beyond being on the same list.
+
+
+## 5. Enrichment: the idea
+
+Enrichment asks one question, repeated thousands of times:
+
+> Of the 588 genes on my list, 21 are annotated "extracellular matrix
+> organization". The genome has 92 such genes in total. Is 21 more than I would
+> expect by chance?
+
+That is a hypergeometric test, the same mathematics as drawing coloured balls
+from an urn. Doing it for every GO term at once is why the output has an
+adjusted p-value column: thousands of tests need a multiple-testing correction,
+exactly as in S4.
+
+### Run it on the website
+
+FishEnrichr is the zebrafish version of Enrichr.
+
+1. Open <https://maayanlab.cloud/FishEnrichr/>
+2. Open `outputs/genes_down.txt`, copy all of it, paste it into the box
+3. Submit, then open the **GO Biological Process 2018** results
+4. Use **Export entries to table** to download the table
+5. Save it into this lesson's `outputs/` folder
+
+Then do the same for `outputs/genes_up.txt`.
+
+### Or run it from R
+
+```{r enrichr from R, echo = TRUE, eval = FALSE}
+
+# The enrichR package talks to the same service.
+library(enrichR)
+
+setEnrichrSite("FishEnrichr")
+
+enriched = enrichr(genes_down, "GO_Biological_Process_2018")
+
+head(enriched[["GO_Biological_Process_2018"]])
+
+```
+
+Either route reaches the same server, and the server is not always available.
+If a whole classroom submits at once you will meet `HTTP 429 Too Many Requests`.
+That is normal, and it is why the next chunk does not depend on your download
+succeeding.
+
+
+## 6. Read the results back into R
+
+```{r read enrichment, echo = TRUE}
+
+# Use your own download if you made one; otherwise the copy committed with the
+# course. Both are the same file.
+read_enrichment = function(mine, committed) {
+  path = if (file.exists(mine)) mine else committed
+  message("reading: ", path)
+  read_tsv(path, show_col_types = FALSE)
+}
+
+fish_down = read_enrichment("outputs/GO_Biological_Process_2018_table.txt",
+                            "../../data/enrichment/fish_GO_BP_2018_down.tsv")
+
+# One row per GO term tested.
+dim(fish_down)
+
+names(fish_down)
+
+```
+
+```{r significant terms, echo = TRUE}
+
+sig_down = fish_down %>%
+  filter(`Adjusted P-value` < 0.05) %>%
+  arrange(`Adjusted P-value`)
+
+sig_down %>% select(Term, Overlap, `Adjusted P-value`)
+
+```
+
+Five terms out of 918 tested. Now the up-regulated genes:
+
+```{r up enrichment, echo = TRUE}
+
+fish_up = read_enrichment("outputs/GO_Biological_Process_2018_table_up.txt",
+                          "../../data/enrichment/fish_GO_BP_2018_up.tsv")
+
+sum(fish_up$`Adjusted P-value` < 0.05)
+
+```
+
+Zero. Three hundred and fifty-four genes go up, strongly and significantly, and
+they enrich in nothing at all.
+
+Hold on to that. S7 is about what it means.
+
+
+## 7. Plot the enrichment
+
+The downloaded table is an ordinary data frame, so everything from S3 applies.
+
+```{r enrichment dotplot, echo = TRUE, fig.width = 9, fig.height = 4}
+
+# "Overlap" arrives as the text "21/92". Split it to get a gene ratio.
+plot_data = sig_down %>%
+  mutate(
+    n_genes   = as.numeric(sub("/.*", "", Overlap)),
+    term_size = as.numeric(sub(".*/", "", Overlap)),
+    ratio     = n_genes / term_size,
+    Term      = sub(" \\(GO:.*", "", Term)          # drop the GO id for the label
+  )
+
+ggplot(plot_data, aes(x = ratio, y = reorder(Term, ratio))) +
+  geom_point(aes(size = n_genes, colour = `Adjusted P-value`)) +
+  scale_colour_gradient(low = "#b2182b", high = "#2166ac") +
+  labs(x = "fraction of the GO term found in our list",
+       y = NULL,
+       size = "genes",
+       title = "Down-regulated genes, GO Biological Process (zebrafish, 2018)") +
+  theme_bw()
+
+```
+
+This is the figure that goes in a talk. It is also the point at which most
+people stop, and that is a mistake.
+
+
+## 8. Read the genes, not the term
+
+A GO term is a label attached by a curator, sometimes decades ago, sometimes by
+an automatic pipeline. The label can be misleading even when the statistics are
+correct. The `Genes` column is the evidence, and it takes ten seconds to read.
+
+```{r driver genes, echo = TRUE}
+
+sig_down %>%
+  select(Term, Overlap, Genes) %>%
+  mutate(Term = sub(" \\(GO:.*", "", Term)) %>%
+  as.data.frame()
+
+```
+
+Look at those five rows carefully before reading on.
+
+Three things should bother you.
+
+**The top term is one gene family.** All 21 genes behind "extracellular matrix
+organization" are collagens, plus one collagen cross-linking enzyme. That is a
+real and coherent finding, but it is one story, not 21 independent ones.
+
+**Three terms are the same genes wearing different hats.** "Notochord
+morphogenesis" and "skeletal system development" are driven by the same
+collagens as the term above them. Ranked lists make these look like three
+findings. They are one.
+
+**One term is not about what it says.** "Cellular response to radiation" is
+carried by `opn1sw1`, `opn1sw2`, `rhol`, `rho`, `opn4a`, `opn1lw2`, `opn1mw1` —
+seven opsins and a rhodopsin. There is no radiation in this experiment. These
+are the same photoreceptor genes that drive "response to light stimulus", and
+they are annotated to a radiation term because light is electromagnetic
+radiation.
+
+So the rule, which is worth more than any of the code above:
+
+> **Never report a GO term before reading the genes that produced it.**
+
+
+## 9. Exercise: why are photoreceptor genes here at all?
+
+These are supposed to be dissected hearts at 48 hpf.
+
+```{r photoreceptor check, echo = TRUE}
+
+res %>%
+  filter(gene %in% c("rho", "crx", "opn1sw1", "opn1sw2", "opn1lw2", "opn1mw1")) %>%
+  select(gene, baseMean, log2FoldChange, padj) %>%
+  arrange(desc(baseMean))
+
+```
+
+`baseMean` is the average expression across all samples. Rhodopsin sits at
+around 2,100 and `crx`, the master regulator of photoreceptor identity, at
+around 2,900.
+
+**Question.** Is this a discovery about the mutant, or a problem with the
+experiment? What would you check next?
+
+**Now try the same for these genes**, and decide whether the answer is the same
+kind of problem:
+
+```{r circadian check, echo = TRUE}
+
+res %>%
+  filter(gene %in% c("per1a", "per2", "per3", "nr1d1", "npas2", "cry5")) %>%
+  select(gene, baseMean, log2FoldChange, padj) %>%
+  arrange(log2FoldChange)
+
+```
+
+Both sets of genes are real, strong and statistically significant. Neither is
+about the mutation. One tells you what tissue is in the tube; the other tells
+you something about when the samples were collected. Finding them is not a
+failure of the analysis — it is the analysis working.
+
+
+## 10. Exercise: a curated list of your own
+
+`data/chd_genes.annotations.tsv` holds 276 genes associated with congenital
+heart disease. Our mutant is a heart model, so those genes ought to be
+over-represented among the differentially expressed ones.
+
+```{r chd overlap, echo = TRUE}
+
+chd = read_tsv("../../data/chd_genes.annotations.tsv", show_col_types = FALSE)
+
+# The CHD list uses human symbols (upper case); ours are zebrafish (lower case).
+chd_symbols = tolower(chd$gene_symbol)
+
+in_chd = tolower(res$gene) %in% chd_symbols
+is_de  = res$gene %in% de$gene
+
+table(CHD = in_chd, DE = is_de)
+
+fisher.test(table(in_chd, is_de))$p.value
+
+```
+
+**Question.** The p-value is not significant. Does that mean the CHD gene list
+is irrelevant to this experiment? Look at *which* CHD genes are differentially
+expressed before you answer:
+
+```{r chd genes de, echo = TRUE}
+
+res %>%
+  filter(tolower(gene) %in% chd_symbols, gene %in% de$gene) %>%
+  select(gene, baseMean, log2FoldChange, padj) %>%
+  arrange(log2FoldChange)
+
+```
+
+One more thing to notice, because S7 begins here. Lower-casing a human symbol to
+match a zebrafish one is a crude way to connect two species. It finds `col1a2`,
+but it misses `col1a1a` and `col1a1b` — the two zebrafish copies of human
+`COL1A1` — because zebrafish duplicated its genome and renamed the copies.
+
+Matching species properly is the subject of the next lesson.
+
+
+## 11. Print R session info
+
+```{r print out R session info, echo = TRUE}
+# Always good practice to print out the R session info for reproducibility
+sessionInfo()
+```
